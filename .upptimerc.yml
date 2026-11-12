@@ -1,31 +1,81 @@
-# Change these first
-owner: upptime # Your GitHub organization or username, where this repository lives
-repo: upptime # The name of this repository
+# The status page of kumoyami.com (status.kumoyami.com), with Upptime: GitHub Actions checks each address every 5
+# minutes from GitHub's servers, opens an issue when one fails (that is the incident, closed when it is back) and
+# publishes the page with GitHub Pages. Nothing runs on the VPS, so the page stays up when the VPS is down.
+# Goes at the root of the Hostarys/kumoyami-status repository, made from the upptime/upptime template
+# (deploy/status/README.md). Customers' own servers are not watched: they work on their own for 30 days.
+owner: Hostarys
+repo: kumoyami-status
 
 sites:
-  - name: Google
-    url: https://www.google.com
-  - name: Wikipedia
-    url: https://en.wikipedia.org
-  - name: Hacker News
-    url: https://news.ycombinator.com
-  - name: Secret Site
-    url: $SECRET_SITE
+  # The site: the home and the pricing page (prices come from the license server)
+  - name: Web
+    url: https://kumoyami.com/
+  # Activation and renewal: an empty request must be refused as invalid (400), which proves the API answers and
+  # reads its database without touching any license
+  - name: Activación de licencias
+    url: https://licenses.kumoyami.com/v1/activate
+    method: POST
+    headers:
+      - 'Content-Type: application/json'
+    body: '{}'
+    expectedStatusCodes:
+      - 400
+  # The old name of the API (apps up to 0.1.5 still call it): the same server, it must keep answering
+  - name: Activación de licencias (nombre antiguo)
+    url: https://licencias.kumoyami.com/v1/activate
+    method: POST
+    headers:
+      - 'Content-Type: application/json'
+    body: '{}'
+    expectedStatusCodes:
+      - 400
+  - name: Renovación de licencias
+    url: https://licenses.kumoyami.com/v1/renew
+    method: POST
+    headers:
+      - 'Content-Type: application/json'
+    body: '{}'
+    expectedStatusCodes:
+      - 400
+  # Accounts: the sign-in page of Mi cuenta, and the OpenID provider of «Entrar con KumoYami» (accounts.kumoyami.com,
+  # its own component: servers fall back to their local accounts when it does not answer)
+  - name: Cuentas e inicio de sesión
+    url: https://kumoyami.com/account
+  - name: Entrar con KumoYami
+    url: https://accounts.kumoyami.com/.well-known/openid-configuration
+  # Payments: the buy page (it needs the plans from the license server); Stripe has its own status page
+  - name: Pagos
+    url: https://kumoyami.com/buy/pro
+  # Downloads: the public image (an anonymous pull token) and the package source of the NAS packages
+  - name: Descargas (imagen Docker)
+    url: https://licenses.kumoyami.com/v1/registry/token?service=registry.kumoyami.com&scope=repository:kumoyami:pull
+  - name: Descargas (paquetes NAS)
+    url: https://licenses.kumoyami.com/v1/packages
+  # Server codes: the page, and the directory API with a code that never exists (404 means it answers)
+  - name: Código de servidor
+    url: https://kumoyami.com/link
+  - name: Código de servidor (API)
+    url: https://licenses.kumoyami.com/v1/directory/BBBBBBBB
+    expectedStatusCodes:
+      - 404
 
 status-website:
-  # Add your custom domain name, or remove the `cname` line if you don't have a domain
-  # Uncomment the `baseUrl` line if you don't have a custom domain and add your repo name there
-  cname: demo.upptime.js.org
-  # baseUrl: /your-repo-name
-  logoUrl: https://raw.githubusercontent.com/upptime/upptime.js.org/master/static/img/icon.svg
-  name: Upptime
-  introTitle: "**Upptime** is the open-source uptime monitor and status page, powered entirely by GitHub."
-  introMessage: This is a sample status page which uses **real-time** data from our [GitHub repository](https://github.com/upptime/upptime). No server required — just GitHub Actions, Issues, and Pages. [**Get your own for free**](https://github.com/upptime/upptime)
+  cname: status.kumoyami.com
+  baseUrl: /
+  logoUrl: https://kumoyami.com/logo-kumo.svg
+  name: Estado de KumoYami
+  introTitle: Estado de kumoyami.com
+  introMessage: >-
+    La web, las cuentas, las licencias, los pagos y las descargas de KumoYami. Tu servidor sigue funcionando hasta 30
+    días aunque kumoyami.com no responda: solo necesita conectarse para renovar su licencia. Tu servidor no aparece
+    aquí: lo vigilas tú.
   navbar:
-    - title: Status
+    - title: Estado
       href: /
-    - title: GitHub
-      href: https://github.com/$OWNER/$REPO
+    - title: kumoyami.com
+      href: https://kumoyami.com
+    - title: Documentación
+      href: https://kumoyami.com/docs
 
-# Upptime also supports notifications, assigning issues, and more
-# See https://upptime.js.org/docs/configuration
+# Incidents and maintenance are GitHub issues in this repository (see deploy/status/README.md); nobody is assigned
+assignees: []
