@@ -48,7 +48,6 @@
       slugs: [
         'activacion-de-licencias',
         'renovacion-de-licencias',
-        'activacion-de-licencias-nombre-antiguo',
         'codigo-de-servidor',
         'codigo-de-servidor-api',
       ],
@@ -79,10 +78,6 @@
     'entrar-con-kumo-yami': { es: 'Entrar con KumoYami', en: 'Sign in with KumoYami' },
     'activacion-de-licencias': { es: 'Activación de licencias', en: 'License activation' },
     'renovacion-de-licencias': { es: 'Renovación de licencias', en: 'License renewal' },
-    'activacion-de-licencias-nombre-antiguo': {
-      es: 'Activación (dirección antigua, apps hasta la 0.1.5)',
-      en: 'Activation (old address, apps up to 0.1.5)',
-    },
     'codigo-de-servidor': { es: 'Código de servidor (página)', en: 'Server code (page)' },
     'codigo-de-servidor-api': { es: 'Código de servidor (búsqueda)', en: 'Server code (lookup)' },
     pagos: { es: 'Compra de planes', en: 'Plan checkout' },

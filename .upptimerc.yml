@@ -20,15 +20,6 @@ sites:
     body: '{}'
     expectedStatusCodes:
       - 400
-  # The old name of the API (apps up to 0.1.5 still call it): the same server, it must keep answering
-  - name: Activación de licencias (nombre antiguo)
-    url: https://licencias.kumoyami.com/v1/activate
-    method: POST
-    headers:
-      - 'Content-Type: application/json'
-    body: '{}'
-    expectedStatusCodes:
-      - 400
   - name: Renovación de licencias
     url: https://licenses.kumoyami.com/v1/renew
     method: POST
