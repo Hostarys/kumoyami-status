@@ -10,13 +10,13 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; style-src 'self'; font-src 'self'; script-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
   <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
   <link rel="icon" href="/favicon.ico?v=2" sizes="48x48">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css?v=4">
 </head>
 <body>
   <header class="top">
     <div class="top-row">
-      <a class="brand" href="/" aria-label="KumoYami: estado del servicio">
-        <img src="/logo-kumo.svg?v=2" alt="" width="90" height="28">
+      <a class="brand" href="/" aria-label="KumoYami Status: estado del servicio">
+        <img src="/status-kumo.svg?v=1" alt="" width="93" height="29">
         <span class="brand-sep" aria-hidden="true"></span>
         <span class="brand-page">Estado</span>
       </a>
@@ -29,15 +29,13 @@
     </div>
   </header>
   <main id="main">
-    <section class="hero wrap">
-      <span class="hero-kanji" aria-hidden="true">雲闇</span>
-      <p class="eyebrow">404</p>
-      <div class="overall" data-state="unknown">
-        <span class="dot" aria-hidden="true"></span>
+    <section class="hero" data-t="none">
+      <div class="wrap hero-in lost">
+        <p class="eyebrow"><span class="ln" aria-hidden="true"></span>404</p>
         <h1>Esta página no existe.</h1>
+        <p>El estado de KumoYami está en la <a href="/">página principal</a>.</p>
+        <p lang="en">This page doesn't exist. The KumoYami status is on the <a href="/">main page</a>.</p>
       </div>
-      <p class="overall-sub">El estado de KumoYami está en la <a href="/">página principal</a>.</p>
-      <p class="overall-sub" lang="en">This page doesn't exist. The KumoYami status is on the <a href="/">main page</a>.</p>
     </section>
   </main>
   <footer class="foot">

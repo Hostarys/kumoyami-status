@@ -1,7 +1,9 @@
-/* status.kumoyami.com. Reads what Upptime commits to Hostarys/kumoyami-status (history/summary.json and
-   history/<slug>.yml, from raw.githubusercontent.com) and the incidents (issues labelled «status» or «maintenance»,
-   from the public GitHub API), and draws them in the KumoYami look. No build step, no tracking, no cookies: the only
-   thing kept in the browser is the chosen language (localStorage). */
+/* status.kumoyami.com. Reads what Upptime commits to Hostarys/kumoyami-status (history/summary.json,
+   history/<slug>.yml and api/<slug>/response-time.json, from raw.githubusercontent.com) and the incidents (issues
+   labelled «status» or «maintenance», from the public GitHub API), and draws them on the KumoYami dark brand.
+   No build step, no tracking, no cookies: the only thing kept in the browser is the chosen language (localStorage).
+   Each state has a colour (green, amber, red, violet, grey) and, as a second cue for colour-blind people, the shape of
+   its indicator (DS «09 Pills»: filled circle, half circle, X, dashed ring, ring with a pulse). */
 (() => {
   'use strict';
 
@@ -12,62 +14,67 @@
   const API = `https://api.github.com/repos/${OWNER}/${REPO}/`;
   const DAYS = 90;
   const DAY_MS = 864e5;
-  // Minutes down in a day from which the day is red (below it, amber)
+  // Minutes down in a day from which the day counts as an outage (below it, a brief incident)
   const MAJOR_MINUTES = 30;
   const STATUS_EVERY = 5 * 60e3;
   const API_EVERY = 10 * 60e3;
   const CLOSED_SHOWN = 10;
   const LANG_KEY = 'ky-status-lang';
+  // Checks that no longer exist. Upptime keeps them in summary.json until its next rebuild, and their issues stay in the
+  // repository: neither is shown. «activacion-de-licencias-nombre-antiguo» was the old licencias.kumoyami.com address.
+  const RETIRED = new Set(['activacion-de-licencias-nombre-antiguo']);
 
   const params = new URLSearchParams(location.search);
-  // ?demo=incident or ?demo=outage feeds made-up data, to look at the page with problems. Only on a local preview:
-  // on status.kumoyami.com the parameter is ignored.
+  // ?demo=ok|degraded|down|outage|incident|maintenance|error feeds made-up data, to look at the page in every state.
+  // Only on a local preview: on status.kumoyami.com the parameter is ignored.
   const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   const DEMO = LOCAL ? params.get('demo') : null;
+  const reducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 
   /* ---------------------------------------------------------------------------------------------------------------
-     Components: the Upptime sites (by slug) in the groups people think in
+     Components: the Upptime sites (by slug) in the groups people think in, named after the KumoYami products (the
+     names are never translated, the descriptions are)
      ------------------------------------------------------------------------------------------------------------- */
   const GROUPS = [
     {
       id: 'web',
       slugs: ['web'],
       match: /^web\b/i,
-      es: { name: 'Web', desc: 'kumoyami.com' },
-      en: { name: 'Website', desc: 'kumoyami.com' },
+      product: 'Web',
+      es: { name: 'KumoYami Web', desc: 'kumoyami.com' },
+      en: { name: 'KumoYami Web', desc: 'kumoyami.com' },
     },
     {
       id: 'accounts',
       slugs: ['cuentas-e-inicio-de-sesion', 'entrar-con-kumo-yami'],
       match: /cuenta|entrar|sesi[oó]n/i,
-      es: { name: 'Cuentas', desc: 'Mi cuenta y Entrar con KumoYami' },
-      en: { name: 'Accounts', desc: 'My account and Sign in with KumoYami' },
+      product: 'Accounts',
+      es: { name: 'KumoYami Accounts', desc: 'Mi cuenta y Entrar con KumoYami' },
+      en: { name: 'KumoYami Accounts', desc: 'My account and Sign in with KumoYami' },
     },
     {
       id: 'licenses',
-      slugs: [
-        'activacion-de-licencias',
-        'renovacion-de-licencias',
-        'codigo-de-servidor',
-        'codigo-de-servidor-api',
-      ],
+      slugs: ['activacion-de-licencias', 'renovacion-de-licencias', 'codigo-de-servidor', 'codigo-de-servidor-api'],
       match: /licenc|c[oó]digo/i,
-      es: { name: 'Licencias', desc: 'Activar y renovar licencias, y el código de servidor' },
-      en: { name: 'Licenses', desc: 'Activating and renewing licenses, and server codes' },
+      product: 'Licenses',
+      es: { name: 'KumoYami Licenses', desc: 'Activar y renovar licencias, y el código de servidor' },
+      en: { name: 'KumoYami Licenses', desc: 'Activating and renewing licenses, and server codes' },
     },
     {
       id: 'payments',
       slugs: ['pagos'],
       match: /pago|compra/i,
-      es: { name: 'Pagos', desc: 'Comprar o renovar un plan' },
-      en: { name: 'Payments', desc: 'Buying or renewing a plan' },
+      product: 'Store',
+      es: { name: 'KumoYami Store', desc: 'Comprar o renovar un plan' },
+      en: { name: 'KumoYami Store', desc: 'Buying or renewing a plan' },
     },
     {
       id: 'downloads',
       slugs: ['descargas-imagen-docker', 'descargas-paquetes-nas'],
       match: /descarga/i,
-      es: { name: 'Descargas', desc: 'La imagen Docker y los paquetes para NAS' },
-      en: { name: 'Downloads', desc: 'The Docker image and the NAS packages' },
+      product: 'Downloads',
+      es: { name: 'KumoYami Downloads', desc: 'La imagen Docker y los paquetes para NAS' },
+      en: { name: 'KumoYami Downloads', desc: 'The Docker image and the NAS packages' },
     },
   ];
   const OTHER = { id: 'other', slugs: [], es: { name: 'Otros servicios', desc: '' }, en: { name: 'Other services', desc: '' } };
@@ -84,6 +91,19 @@
     'descargas-imagen-docker': { es: 'Imagen Docker', en: 'Docker image' },
     'descargas-paquetes-nas': { es: 'Paquetes para NAS', en: 'NAS packages' },
   };
+  // The short names of the response-time ticker
+  const SHORT = {
+    web: { es: 'KumoYami Web', en: 'KumoYami Web' },
+    'cuentas-e-inicio-de-sesion': { es: 'Mi cuenta', en: 'My account' },
+    'entrar-con-kumo-yami': { es: 'Entrar con KumoYami', en: 'Sign in' },
+    'activacion-de-licencias': { es: 'Activación', en: 'Activation' },
+    'renovacion-de-licencias': { es: 'Renovación', en: 'Renewal' },
+    'codigo-de-servidor': { es: 'Código de servidor', en: 'Server code' },
+    'codigo-de-servidor-api': { es: 'Búsqueda de código', en: 'Code lookup' },
+    pagos: { es: 'KumoYami Store', en: 'KumoYami Store' },
+    'descargas-imagen-docker': { es: 'Imagen Docker', en: 'Docker image' },
+    'descargas-paquetes-nas': { es: 'Paquetes NAS', en: 'NAS packages' },
+  };
 
   /* ---------------------------------------------------------------------------------------------------------------
      Texts
@@ -94,7 +114,7 @@
       description:
         'Si la web, las cuentas, las licencias, los pagos y las descargas de KumoYami funcionan ahora mismo, y las incidencias recientes.',
       skip: 'Saltar al contenido',
-      brandLabel: 'KumoYami: estado del servicio',
+      brandLabel: 'KumoYami Status: estado del servicio',
       navStatus: 'Estado',
       navLabel: 'Enlaces',
       langToggle: 'EN',
@@ -105,6 +125,14 @@
       eyebrow: 'Estado del servicio',
       loading: 'Comprobando…',
       checkedEvery: 'Comprobado cada 5 minutos desde fuera de nuestros servidores',
+      tilesLabel: 'Resumen por servicio',
+      sumLabel: 'Disponibilidad · 90 días',
+      sumUp: (n, all) => (n === all ? `${all} de ${all} servicios operativos` : `${n} de ${all} servicios operativos`),
+      tickerTitle: 'Respuesta',
+      tickerPause: 'Detener el desplazamiento',
+      tickerPlay: 'Reanudar el desplazamiento',
+      tickerList: 'Tiempo de respuesta de cada servicio en la última comprobación',
+      tickerNone: 'sin respuesta',
       servicesTitle: 'Servicios',
       legendLabel: 'Leyenda de las barras',
       legendOk: 'Sin incidencias',
@@ -126,9 +154,19 @@
       footNavLabel: 'KumoYami',
       langLabel: 'Idioma',
 
+      overall: {
+        loading: 'Comprobando',
+        ok: 'Operativo',
+        degraded: 'Degradado',
+        down: 'Caído',
+        incident: 'En curso',
+        maintenance: 'Mantenimiento',
+        unknown: 'Sin datos',
+      },
       allOk: 'Todo funciona.',
+      allOkSub: (n) => `Los ${n} servicios responden con normalidad.`,
       someIssues: 'Algunos servicios tienen problemas.',
-      maintenanceNow: (t) => `Mantenimiento en curso: ${t}`,
+      maintenanceUntil: (d) => `Mantenimiento en curso hasta las ${d}. Lo demás funciona con normalidad.`,
       affects: (list) => `Afecta a ${list}`,
       working: 'Lo estamos arreglando.',
       loadFail: 'No se pudo cargar el estado.',
@@ -136,7 +174,7 @@
       loadFailLater: 'Vuelve a intentarlo en unos minutos.',
       retry: 'Reintentar',
       lastCheck: (rel) => `Última comprobación ${rel}`,
-      state: { up: 'Funciona', degraded: 'Lento', down: 'Sin servicio', unknown: 'Sin datos' },
+      state: { up: 'Operativo', degraded: 'Degradado', down: 'Caído', maintenance: 'Mantenimiento', unknown: 'Sin datos' },
       uptimeTitle: '90 días',
       uptimeSince: (d) => `desde el ${d}`,
       uptimeAria: (pct, since) => `Disponibilidad: ${pct}${since ? `, ${since}` : ' en 90 días'}`,
@@ -144,6 +182,7 @@
       daysOk: (n) => `Últimos ${n} días: sin incidencias`,
       daysBad: (n, bad, total) => `Últimos ${n} días: ${bad} ${bad === 1 ? 'día' : 'días'} con problemas, ${total} en total`,
       daysNoData: (d) => `; sin datos antes del ${d}`,
+      daysHint: 'Usa las flechas para recorrer los días.',
       dayOk: 'Sin incidencias',
       dayDown: (d) => `${d} con problemas`,
       dayNone: 'Sin datos',
@@ -171,7 +210,7 @@
       description:
         'Whether the KumoYami website, accounts, licenses, payments and downloads are working right now, and recent incidents.',
       skip: 'Skip to content',
-      brandLabel: 'KumoYami: service status',
+      brandLabel: 'KumoYami Status: service status',
       navStatus: 'Status',
       navLabel: 'Links',
       langToggle: 'ES',
@@ -182,6 +221,14 @@
       eyebrow: 'Service status',
       loading: 'Checking…',
       checkedEvery: 'Checked every 5 minutes from outside our servers',
+      tilesLabel: 'Summary by service',
+      sumLabel: 'Uptime · 90 days',
+      sumUp: (n, all) => `${n} of ${all} services operational`,
+      tickerTitle: 'Response',
+      tickerPause: 'Stop scrolling',
+      tickerPlay: 'Resume scrolling',
+      tickerList: 'Response time of each service at the last check',
+      tickerNone: 'no response',
       servicesTitle: 'Services',
       legendLabel: 'Bar legend',
       legendOk: 'No incidents',
@@ -203,9 +250,19 @@
       footNavLabel: 'KumoYami',
       langLabel: 'Language',
 
+      overall: {
+        loading: 'Checking',
+        ok: 'Operational',
+        degraded: 'Degraded',
+        down: 'Down',
+        incident: 'Ongoing',
+        maintenance: 'Maintenance',
+        unknown: 'No data',
+      },
       allOk: 'All systems operational.',
+      allOkSub: (n) => `All ${n} services are answering normally.`,
       someIssues: 'Some services are having problems.',
-      maintenanceNow: (t) => `Maintenance in progress: ${t}`,
+      maintenanceUntil: (d) => `Maintenance in progress until ${d}. Everything else is working normally.`,
       affects: (list) => `Affects ${list}`,
       working: "We're fixing it.",
       loadFail: "Couldn't load the status.",
@@ -213,7 +270,7 @@
       loadFailLater: 'Try again in a few minutes.',
       retry: 'Try again',
       lastCheck: (rel) => `Last check ${rel}`,
-      state: { up: 'Operational', degraded: 'Slow', down: 'Down', unknown: 'No data' },
+      state: { up: 'Operational', degraded: 'Degraded', down: 'Down', maintenance: 'Maintenance', unknown: 'No data' },
       uptimeTitle: '90 days',
       uptimeSince: (d) => `since ${d}`,
       uptimeAria: (pct, since) => `Uptime: ${pct}${since ? `, ${since}` : ' over 90 days'}`,
@@ -221,6 +278,7 @@
       daysOk: (n) => `Last ${n} days: no incidents`,
       daysBad: (n, bad, total) => `Last ${n} days: ${bad} ${bad === 1 ? 'day' : 'days'} with problems, ${total} in total`,
       daysNoData: (d) => `; no data before ${d}`,
+      daysHint: 'Use the arrow keys to go through the days.',
       dayOk: 'No incidents',
       dayDown: (d) => `${d} with problems`,
       dayNone: 'No data',
@@ -249,8 +307,9 @@
      ------------------------------------------------------------------------------------------------------------- */
   const S = {
     lang: 'es',
-    summary: null, // array from history/summary.json
+    summary: null, // array from history/summary.json, without the retired checks
     starts: {}, // slug -> Date (startTime of history/<slug>.yml)
+    rt: {}, // slug -> response time in ms (api/<slug>/response-time.json)
     statusError: false,
     statusAt: 0,
     issues: null, // normalised incidents and maintenance
@@ -259,6 +318,8 @@
     lastRun: null, // Date of the last finished check
     comments: {}, // issue number -> 'loading' | 'error' | array
     expanded: new Set(), // group ids open
+    tickerKey: '', // what the ticker shows, so it is only rebuilt (and its animation restarted) when that changes
+    tickerPaused: false,
   };
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -293,6 +354,45 @@
       }
     for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid);
     return el;
+  }
+
+  // The state indicator of the design system: the shape says the state (filled circle, half circle, dashed ring,
+  // ring with a pulse, an X)
+  const SHAPE = {
+    up: 'up',
+    ok: 'up',
+    degraded: 'degraded',
+    minor: 'degraded',
+    down: 'down',
+    major: 'down',
+    maintenance: 'paused',
+    none: 'paused',
+    unknown: 'paused',
+    incident: 'deploy',
+    loading: 'deploy',
+    open: 'deploy',
+  };
+  // And its colour: ok green, warn amber, down red, maint violet, none grey
+  const TONE = {
+    up: 'ok',
+    ok: 'ok',
+    degraded: 'warn',
+    minor: 'warn',
+    incident: 'warn',
+    open: 'warn',
+    down: 'down',
+    major: 'down',
+    maintenance: 'maint',
+  };
+  const tone = (state) => TONE[state] || 'none';
+  const ind = (state) => h('span', { class: `st st-${SHAPE[state] || 'paused'} t-${tone(state)}`, 'aria-hidden': 'true' });
+  // A state pill, tinted with the colour of its state
+  function pillEl(state, text, extra) {
+    return h('span', { class: `pill t-${tone(state)}${extra ? ` ${extra}` : ''}`, 'data-s': state }, ind(state), h('span', { text }));
+  }
+  // A strip of days (the 90-day bars in small): for the hero summary and the tiles
+  function stripEl(days, cls) {
+    return h('span', { class: `strip ${cls || ''}`, 'aria-hidden': 'true' }, days.map((d) => h('i', { 'data-l': d.l })));
   }
 
   const isoDay = (d) => new Date(d).toISOString().slice(0, 10);
@@ -350,6 +450,9 @@
       maximumFractionDigits: 2,
     }).format(v / 100);
   }
+  function fmtMs(ms) {
+    return `${new Intl.NumberFormat(locale()).format(Math.round(ms))} ms`;
+  }
 
   function escapeHtml(s) {
     return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -403,11 +506,14 @@
      ------------------------------------------------------------------------------------------------------------- */
   async function loadStatus() {
     try {
-      const summary = await getJSON(`${RAW}history/summary.json${bust()}`, { fresh: true });
-      if (!Array.isArray(summary)) throw new Error('summary');
-      const ymls = await Promise.allSettled(
-        summary.map((s) => getJSON(`${RAW}history/${s.slug}.yml${bust()}`, { fresh: true, text: true })),
-      );
+      if (DEMO === 'error') throw new Error('demo');
+      const all = await getJSON(`${RAW}history/summary.json${bust()}`, { fresh: true });
+      if (!Array.isArray(all)) throw new Error('summary');
+      const summary = all.filter((s) => s && s.slug && !RETIRED.has(s.slug));
+      const [ymls, rts] = await Promise.all([
+        Promise.allSettled(summary.map((s) => getJSON(`${RAW}history/${s.slug}.yml${bust()}`, { fresh: true, text: true }))),
+        Promise.allSettled(summary.map((s) => getJSON(`${RAW}api/${s.slug}/response-time.json${bust()}`, { fresh: true }))),
+      ]);
       const starts = {};
       ymls.forEach((r, i) => {
         if (r.status !== 'fulfilled') return;
@@ -415,13 +521,22 @@
         const d = m && new Date(m[1]);
         if (d && !isNaN(d)) starts[summary[i].slug] = d;
       });
+      // The shields.io badge Upptime writes («697 ms»); without it, the last time in the summary
+      const rt = {};
+      summary.forEach((s, i) => {
+        const r = rts[i];
+        const m = r.status === 'fulfilled' && r.value && /([\d.,]+)\s*ms/.exec(String(r.value.message || ''));
+        const v = m ? Number(m[1].replace(/[.,]/g, '')) : Number(s.time);
+        if (Number.isFinite(v) && v > 0) rt[s.slug] = v;
+      });
       S.summary = summary;
       S.starts = starts;
+      S.rt = rt;
       S.statusError = false;
       if (DEMO) demoStatus();
     } catch (e) {
       S.statusError = true;
-      if (DEMO && !S.summary) {
+      if (DEMO && DEMO !== 'error' && !S.summary) {
         S.summary = Object.keys(NAMES).map((slug) => ({ slug, name: NAMES[slug].es, status: 'up', dailyMinutesDown: {} }));
         S.statusError = false;
         demoStatus();
@@ -440,6 +555,7 @@
     };
     const start = meta('start');
     const end = meta('end');
+    const expected = meta('expectedDown');
     return {
       num: i.number,
       kind: names.includes('maintenance') ? 'maintenance' : 'incident',
@@ -454,6 +570,7 @@
       auto: /^In \[`[0-9a-f]{7}`\]\(/.test(body.trim()),
       start: start ? new Date(start) : null,
       end: end ? new Date(end) : null,
+      expected: expected ? expected.split(',').map((s) => s.trim()).filter(Boolean) : [],
     };
   }
 
@@ -463,9 +580,11 @@
       if (DEMO) list = demoIssues();
       else list = await getJSON(`${API}issues?state=all&per_page=60`);
       if (!Array.isArray(list)) throw new Error('issues');
+      const labelsOf = (i) => (i.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
       S.issues = list
         .filter((i) => !i.pull_request)
-        .filter((i) => (i.labels || []).some((l) => ['status', 'maintenance'].includes(typeof l === 'string' ? l : l.name)))
+        .filter((i) => labelsOf(i).some((n) => n === 'status' || n === 'maintenance'))
+        .filter((i) => !labelsOf(i).some((n) => RETIRED.has(n)))
         .map(normIssue);
       S.issuesError = false;
       // Updates written on an ongoing incident show without a click
@@ -521,11 +640,23 @@
     return keys;
   }
   const level = (m) => (m <= 0 ? 'ok' : m < MAJOR_MINUTES ? 'minor' : 'major');
-  const RANK = { up: 0, unknown: 0, degraded: 1, down: 2 };
+  const RANK = { up: 0, unknown: 0, maintenance: 1, degraded: 2, down: 3 };
   const LRANK = { none: -1, ok: 0, minor: 1, major: 2 };
 
   function siteName(slug, fallback) {
     return (NAMES[slug] && NAMES[slug][S.lang]) || fallback || slug;
+  }
+
+  // Maintenance windows open right now
+  function maintenanceNow() {
+    const now = Date.now();
+    return (S.issues || []).filter((i) => i.kind === 'maintenance' && i.open && i.start && i.end && i.start <= now && now <= i.end);
+  }
+  // The live state of a site: during a maintenance window that names it (expectedDown), it is «in maintenance»
+  function liveStatus(site) {
+    const st = ['up', 'down', 'degraded'].includes(site.status) ? site.status : 'unknown';
+    if (maintenanceNow().some((m) => m.expected.includes(site.slug) || m.labels.includes(site.slug))) return 'maintenance';
+    return st;
   }
 
   function siteModel(site, keys) {
@@ -534,13 +665,13 @@
     const startKey = start ? isoDay(start) : null;
     const todayKey = keys[keys.length - 1];
     const dmd = site.dailyMinutesDown || {};
-    const status = ['up', 'down', 'degraded'].includes(site.status) ? site.status : 'unknown';
+    const status = liveStatus(site);
     const days = keys.map((k) => {
       if (startKey && k < startKey) return { k, m: 0, l: 'none' };
-      let m = Number(dmd[k]) || 0;
+      const m = Number(dmd[k]) || 0;
       let l = level(m);
-      // The minutes of today are counted only when the summary is rebuilt: while a component is down, today is red;
-      // while it is slow, at least amber
+      // The minutes of today are counted only when the summary is rebuilt: while a component is down, today is an
+      // outage; while it is slow, at least a brief incident
       if (k === todayKey && status === 'down') l = 'major';
       if (k === todayKey && status === 'degraded' && l === 'ok') l = 'minor';
       return { k, m, l };
@@ -587,7 +718,10 @@
     if (other.length) groups.push({ g: OTHER, members: other });
 
     return groups.map(({ g, members }) => {
-      const status = members.reduce((a, m) => (RANK[m.status] > RANK[a] ? m.status : a), members.every((m) => m.status === 'unknown') ? 'unknown' : 'up');
+      const status = members.reduce(
+        (a, m) => (RANK[m.status] > RANK[a] ? m.status : a),
+        members.every((m) => m.status === 'unknown') ? 'unknown' : 'up',
+      );
       const days = keys.map((k, i) => {
         let best = { k, m: 0, l: 'none' };
         for (const mem of members) {
@@ -602,6 +736,7 @@
       return {
         id: g.id,
         name: g[S.lang].name,
+        product: g.product || null,
         desc: g[S.lang].desc,
         status,
         days,
@@ -628,7 +763,7 @@
     }
     return inc.rawTitle.replace(/^[^\p{L}\p{N}«"¿¡(]+/u, '').trim() || inc.rawTitle;
   }
-  // Red when Upptime's title says «is down» or a component it is about is down right now; amber otherwise
+  // An outage when Upptime's title says «is down» or a component it is about is down right now; slow otherwise
   function incidentIsDown(inc) {
     if (/is down\s*$/.test(inc.rawTitle)) return true;
     return inc.open && !!S.summary && S.summary.some((s) => s.status === 'down' && inc.labels.includes(s.slug));
@@ -673,6 +808,8 @@
     });
     document.querySelectorAll('.lang-switch button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === S.lang)));
     $('#year').textContent = String(new Date().getFullYear());
+    S.tickerKey = '';
+    syncTickerButton();
   }
 
   function setLang(lang, remember) {
@@ -695,6 +832,10 @@
 
   function render() {
     renderOverall();
+    const groups = S.summary ? groupsModel() : [];
+    renderSummary(groups);
+    renderTiles(groups);
+    renderTicker();
     renderGroups();
     renderMaintenance();
     renderIncidents();
@@ -702,35 +843,41 @@
     updateAxis();
   }
 
+  function setOverall(state, word, title, sub) {
+    const box = $('#overall');
+    box.dataset.state = state;
+    // The hero takes the colour of the state (its glow)
+    $('.hero').dataset.t = tone(state);
+    const pill = $('#overall-pill');
+    pill.className = `pill pill-lg t-${tone(state)}`;
+    pill.replaceChildren(ind(state), h('span', { id: 'overall-word', text: word }));
+    const tEl = $('#overall-title');
+    if (tEl.textContent !== title) tEl.textContent = title;
+    // A long incident title gets a smaller size, so the hero stays two or three lines
+    tEl.classList.toggle('is-long', title.length > 24);
+    const sEl = $('#overall-sub');
+    if (sEl.textContent !== sub) sEl.textContent = sub;
+  }
+
   function renderOverall() {
     const tx = t();
-    const box = $('#overall');
-    const title = $('#overall-title');
-    const sub = $('#overall-sub');
+    const words = tx.overall;
     if (!S.summary) {
-      if (S.statusError) {
-        box.dataset.state = 'unknown';
-        title.textContent = tx.loadFail;
-        sub.textContent = navigator.onLine === false ? tx.loadFailOffline : tx.loadFailLater;
-      } else {
-        box.dataset.state = 'loading';
-        title.textContent = tx.loading;
-        sub.textContent = '';
-      }
+      if (S.statusError)
+        setOverall('unknown', words.unknown, tx.loadFail, navigator.onLine === false ? tx.loadFailOffline : tx.loadFailLater);
+      else setOverall('loading', words.loading, tx.loading, '');
       return;
     }
-    const sites = S.summary;
-    const down = sites.filter((s) => s.status === 'down');
-    const slow = sites.filter((s) => s.status === 'degraded');
+    const sites = S.summary.map((s) => ({ ...s, live: liveStatus(s) }));
+    const down = sites.filter((s) => s.live === 'down');
+    const slow = sites.filter((s) => s.live === 'degraded');
     const open = (S.issues || []).filter((i) => i.kind === 'incident' && i.open);
     const now = Date.now();
-    const maintNow = (S.issues || []).find(
-      (i) => i.kind === 'maintenance' && i.open && i.start && i.end && i.start <= now && now <= i.end,
-    );
+    const maint = maintenanceNow()[0];
 
     if (down.length || slow.length || open.length) {
-      box.dataset.state = down.length || open.some(incidentIsDown) ? 'major' : 'minor';
-      title.textContent = open.length === 1 ? incidentTitle(open[0]) : tx.someIssues;
+      const state = down.length || open.some(incidentIsDown) ? 'down' : slow.length ? 'degraded' : 'incident';
+      const title = open.length === 1 ? incidentTitle(open[0]) : tx.someIssues;
       const affected = [];
       const add = (n) => n && !affected.includes(n) && affected.push(n);
       [...down, ...slow].forEach((s) => add(groupOfSlug(s.slug) || siteName(s.slug, s.name)));
@@ -741,20 +888,128 @@
         const first = Math.min(...open.map((i) => i.created.getTime()));
         parts.push(tx.ongoingFor(dur((now - first) / 60000)));
       }
-      sub.textContent = parts.length ? `${parts.join(' · ')}. ${tx.working}` : tx.working;
-    } else if (maintNow) {
-      box.dataset.state = 'minor';
-      title.textContent = tx.maintenanceNow(incidentTitle(maintNow));
-      sub.textContent = '';
+      setOverall(state, words[state], title, parts.length ? `${parts.join(' · ')}. ${tx.working}` : tx.working);
+    } else if (maint) {
+      setOverall('maintenance', words.maintenance, incidentTitle(maint), tx.maintenanceUntil(fmtTime(maint.end)));
     } else {
-      box.dataset.state = 'ok';
-      title.textContent = tx.allOk;
-      sub.textContent = '';
+      setOverall('ok', words.ok, tx.allOk, tx.allOkSub(sites.length));
     }
   }
 
+  // The hero's summary: uptime over 90 days of every service, how many work now, and all of them in one strip
+  function renderSummary(groups) {
+    const box = $('#summary');
+    if (!S.summary || !groups.length) {
+      box.hidden = true;
+      return;
+    }
+    const tx = t();
+    const sites = groups.flatMap((g) => g.members);
+    const pcts = sites.map((m) => m.pct).filter((p) => p != null);
+    const pct = pcts.length ? pcts.reduce((a, b) => a + b, 0) / pcts.length : null;
+    const up = sites.filter((m) => m.status === 'up').length;
+    // The indicator of the line is the worst state among them
+    const worst = sites.reduce((w, m) => (RANK[m.status] > RANK[w] ? m.status : w), 'up');
+    const days = groups[0].days.map((d, i) =>
+      groups.reduce((best, g) => (LRANK[g.days[i].l] > LRANK[best.l] ? g.days[i] : best), { k: d.k, m: 0, l: 'none' }),
+    );
+    box.hidden = false;
+    box.replaceChildren(
+      h('p', { class: 'sum-label', text: tx.sumLabel }),
+      h('p', { class: 'sum-pct', text: fmtPct(pct) }),
+      h('p', { class: 'sum-up' }, ind(worst), h('span', { text: tx.sumUp(up, sites.length) })),
+      stripEl(days, 'strip-sum'),
+      h('p', { class: 'sum-axis', 'aria-hidden': 'true' }, h('span', { text: tx.axisStart90 }), h('span', { text: tx.axisToday })),
+    );
+  }
+
+  // The hero's tiles: one per group, its state by colour and shape, the last 30 days, a link down to its history
+  function renderTiles(groups) {
+    const box = $('#tiles');
+    if (!S.summary) {
+      box.hidden = true;
+      return;
+    }
+    const tx = t();
+    box.hidden = false;
+    box.replaceChildren(
+      ...groups.map((g) =>
+        h(
+          'li',
+          null,
+          h(
+            'a',
+            { class: 'tile', href: `#g-${g.id}`, 'data-s': g.status, 'data-t': tone(g.status) },
+            h(
+              'span',
+              { class: 'tile-top' },
+              ind(g.status),
+              g.product
+                ? h('span', { class: 'tile-name' }, h('span', { class: 'tile-pre', text: 'KumoYami ' }), g.product)
+                : h('span', { class: 'tile-name', text: g.name }),
+            ),
+            stripEl(g.days.slice(-30), 'strip-tile'),
+            h(
+              'span',
+              { class: 'tile-foot' },
+              h('span', { class: 'tile-state', text: tx.state[g.status] }),
+              h('span', { class: 'tile-pct', text: fmtPct(g.pct) }),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // The DS ticker: each service, its state and its response time at the last check
+  function renderTicker() {
+    const sec = $('#ticker');
+    if (!S.summary || !S.summary.length) {
+      sec.hidden = true;
+      return;
+    }
+    const tx = t();
+    const items = S.summary.map((s) => {
+      const live = liveStatus(s);
+      const short = (SHORT[s.slug] && SHORT[s.slug][S.lang]) || siteName(s.slug, s.name);
+      const ms = S.rt[s.slug];
+      return { slug: s.slug, live, short, ms: live === 'down' || !ms ? null : ms };
+    });
+    const key = `${S.lang}|${items.map((i) => `${i.slug}:${i.live}:${i.ms}`).join(',')}`;
+    sec.hidden = false;
+    if (key === S.tickerKey) return;
+    S.tickerKey = key;
+    const list = (hidden) =>
+      h(
+        'ul',
+        hidden ? { class: 'ticker-list', 'aria-hidden': 'true' } : { class: 'ticker-list', 'aria-label': tx.tickerList },
+        items.map((i) =>
+          h(
+            'li',
+            { class: 'ticker-item', 'data-s': i.live },
+            ind(i.live),
+            h('b', { text: i.short }),
+            h('span', { class: 'visually-hidden', text: `${tx.state[i.live]}:` }),
+            h('span', { class: 'ms', text: i.ms ? fmtMs(i.ms) : tx.tickerNone }),
+            h('span', { class: 'sep', 'aria-hidden': 'true' }),
+          ),
+        ),
+      );
+    // Two copies make the loop seamless; the second one is for the eyes only
+    $('#ticker-track').replaceChildren(list(false), list(true));
+  }
+
+  function syncTickerButton() {
+    const b = $('#ticker-pause');
+    const sec = $('#ticker');
+    if (!b) return;
+    b.setAttribute('aria-pressed', String(S.tickerPaused));
+    b.setAttribute('aria-label', S.tickerPaused ? t().tickerPlay : t().tickerPause);
+    sec.classList.toggle('is-paused', S.tickerPaused);
+  }
+
   function stateEl(status) {
-    return h('span', { class: 'state', 'data-s': status, text: t().state[status] });
+    return pillEl(status, t().state[status], 'pill-row-state');
   }
 
   function uptimeEl(m) {
@@ -775,7 +1030,7 @@
       class: 'days',
       role: 'img',
       tabindex: '0',
-      'aria-label': `${model.name}. ${label}`,
+      'aria-label': `${model.name}. ${label}. ${tx.daysHint}`,
       'data-focus': `days-${model.id || model.slug}`,
     });
     for (const d of model.days) wrap.append(h('span', { class: 'day', 'data-l': d.l, 'data-k': d.k, 'data-m': String(d.m) }));
@@ -806,8 +1061,9 @@
         box.replaceChildren(
           h(
             'div',
-            { class: 'load-error' },
-            h('p', { text: navigator.onLine === false ? tx.loadFailOffline : tx.loadFailLater }),
+            { class: 'load-error', role: 'status' },
+            ind('unknown'),
+            h('div', null, h('p', { class: 'load-error-title', text: tx.loadFail }), h('p', { text: navigator.onLine === false ? tx.loadFailOffline : tx.loadFailLater })),
             h('button', { type: 'button', class: 'retry', onclick: () => loadStatus() }, tx.retry),
           ),
         );
@@ -819,7 +1075,11 @@
     box.setAttribute('aria-busy', 'false');
     box.replaceChildren(
       ...groups.map((g) => {
-        const el = h('section', { class: 'group', 'aria-label': g.name, 'data-g': g.id }, rowEl(g, false));
+        const el = h(
+          'section',
+          { class: 'group', id: `g-${g.id}`, 'aria-label': g.name, 'data-g': g.id, 'data-s': g.status, 'data-t': tone(g.status) },
+          rowEl(g, false),
+        );
         if (g.members.length > 1) {
           const open = S.expanded.has(g.id);
           const subsId = `subs-${g.id}`;
@@ -844,10 +1104,7 @@
             h(
               'div',
               { class: 'subs', id: subsId, hidden: !open },
-              g.members.map((m) => {
-                const s = h('div', { class: 'sub' }, rowEl(m, true));
-                return s;
-              }),
+              g.members.map((m) => h('div', { class: 'sub' }, rowEl(m, true))),
             ),
           );
         }
@@ -895,12 +1152,19 @@
       ...list.map((i) => {
         const ongoing = i.start <= now;
         const body = md(i.body);
+        const when = `${fmtWhen(i.start)} – ${sameDay(i.start, i.end) ? fmtTime(i.end) : fmtWhen(i.end)}`;
         return h(
-          'div',
-          { class: 'notice', role: 'note' },
-          h('strong', { text: `${ongoing ? tx.maintenanceOngoing : tx.maintenance}: ${incidentTitle(i)}` }),
-          h('span', { class: 'meta', text: `${fmtWhen(i.start)} – ${sameDay(i.start, i.end) ? fmtTime(i.end) : fmtWhen(i.end)}` }),
-          body ? h('div', { class: 'body inc-body', html: body }) : null,
+          'aside',
+          { class: `notice${ongoing ? ' is-now' : ''}`, 'aria-label': ongoing ? tx.maintenanceOngoing : tx.maintenance },
+          h(
+            'p',
+            { class: 'notice-head' },
+            ind(ongoing ? 'loading' : 'maintenance'),
+            h('span', { class: 'notice-label', text: ongoing ? tx.maintenanceOngoing : tx.maintenance }),
+            h('time', { class: 'notice-when', datetime: i.start.toISOString(), text: when }),
+          ),
+          h('h3', { class: 'notice-title', text: incidentTitle(i) }),
+          body ? h('div', { class: 'inc-body', html: body }) : null,
         );
       }),
     );
@@ -911,7 +1175,7 @@
     const box = $('#incidents');
     const tx = t();
     if (S.issuesError && !S.issues) {
-      box.replaceChildren(h('p', { class: 'quiet', text: tx.incidentsFail }));
+      box.replaceChildren(h('p', { class: 'quiet is-error' }, ind('unknown'), h('span', { text: tx.incidentsFail })));
       return;
     }
     if (!S.issues) return;
@@ -923,10 +1187,15 @@
       .slice(0, CLOSED_SHOWN);
     const all = [...open, ...closed];
     if (!all.length) {
-      box.replaceChildren(h('p', { class: 'quiet', text: tx.noIncidents }));
+      box.replaceChildren(h('p', { class: 'quiet is-empty' }, ind('ok'), h('span', { text: tx.noIncidents })));
       return;
     }
-    box.replaceChildren(h('ol', { class: 'incidents' }, all.map(incidentEl)));
+    const focused = document.activeElement && box.contains(document.activeElement) ? document.activeElement.id : null;
+    box.replaceChildren(h('ol', { class: 'timeline' }, all.map(incidentEl)));
+    if (focused) {
+      const again = document.getElementById(focused);
+      if (again) again.focus();
+    }
   }
 
   function incidentEl(inc) {
@@ -957,20 +1226,22 @@
     } else if (c === 'error') {
       updates = h('p', { class: 'quiet', id: `upd-${inc.num}`, tabindex: '-1', text: tx.updatesFail });
     } else if (c !== 'loading' && handComments > 0) {
-      updates = h('button', { type: 'button', class: 'link-btn', onclick: () => loadComments(inc, true) }, tx.showUpdates);
+      updates = h('button', { type: 'button', class: 'link-btn', id: `more-upd-${inc.num}`, onclick: () => loadComments(inc, true) }, chevron(), tx.showUpdates);
     }
+    const state = inc.open ? (incidentIsDown(inc) ? 'down' : /degraded performance\s*$/.test(inc.rawTitle) ? 'degraded' : 'open') : 'ok';
     return h(
       'li',
-      { class: 'incident' },
+      { class: `inc${inc.open ? ' is-open' : ''}`, 'data-s': state, 'data-t': tone(state) },
+      h('span', { class: 'inc-node', 'aria-hidden': 'true' }, ind(state)),
       h(
-        'div',
-        { class: 'inc-when' },
-        h('time', { datetime: inc.created.toISOString(), text: fmtDay(isoDay(inc.created)) }),
-        h('span', { class: `pill ${inc.open ? 'pill-open' : 'pill-closed'}${inc.open && incidentIsDown(inc) ? ' is-down' : ''}`, text: inc.open ? tx.open : tx.closed }),
-      ),
-      h(
-        'div',
-        { class: 'inc-main' },
+        'article',
+        { class: 'inc-card' },
+        h(
+          'div',
+          { class: 'inc-top' },
+          h('time', { class: 'inc-date', datetime: inc.created.toISOString(), text: fmtDay(isoDay(inc.created)) }),
+          pillEl(state, inc.open ? tx.open : tx.closed, 'sm'),
+        ),
         h('h3', { text: incidentTitle(inc) }),
         h('p', { class: 'inc-meta', text: meta }),
         h('div', { class: 'inc-body', html: incidentBody(inc) }),
@@ -995,7 +1266,7 @@
      The tooltip of a day: pointer (mouse and touch) and keyboard (arrows on a focused bar)
      ------------------------------------------------------------------------------------------------------------- */
   const tip = $('#tip');
-  let active = null; // { bar, idx }
+  let active = null; // { bar, idx, el }
 
   function visibleDays(bar) {
     return [...bar.children].filter((d) => d.offsetWidth > 0);
@@ -1005,6 +1276,7 @@
     if (!days.length) return;
     idx = Math.max(0, Math.min(days.length - 1, idx));
     if (active && active.el) active.el.classList.remove('is-on');
+    if (active && active.bar !== bar) active.bar.classList.remove('is-active');
     const day = days[idx];
     day.classList.add('is-on');
     bar.classList.add('is-active');
@@ -1015,7 +1287,10 @@
     const l = day.dataset.l;
     const isToday = idx === days.length - 1;
     const text = l === 'none' ? tx.dayNone : l === 'ok' ? tx.dayOk : tx.dayDown(m ? dur(m) : '');
-    tip.replaceChildren(h('strong', { text: `${fmtDay(k)}${isToday ? ` · ${tx.today}` : ''}` }), h('span', { text: text.trim() }));
+    tip.replaceChildren(
+      h('strong', { text: `${fmtDay(k)}${isToday ? ` · ${tx.today}` : ''}` }),
+      h('span', { class: 'tip-state' }, ind(l), h('span', { text: text.trim() })),
+    );
     tip.hidden = false;
     const r = day.getBoundingClientRect();
     const tw = tip.offsetWidth;
@@ -1076,6 +1351,9 @@
     document.addEventListener('pointerdown', (e) => {
       if (!(e.target.closest && e.target.closest('.days'))) hideDay();
     });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && active) hideDay();
+    });
     window.addEventListener('scroll', () => active && document.activeElement !== active.bar && hideDay(), { passive: true });
     window.addEventListener('resize', () => {
       hideDay();
@@ -1083,8 +1361,19 @@
     });
   }
 
+  function wireTicker() {
+    $('#ticker-pause').addEventListener('click', () => {
+      S.tickerPaused = !S.tickerPaused;
+      syncTickerButton();
+    });
+    // With reduced motion the ticker never moves (CSS), so the button has nothing to stop
+    const sync = () => $('#ticker-pause').toggleAttribute('hidden', !!reducedMotion.matches);
+    sync();
+    if (reducedMotion.addEventListener) reducedMotion.addEventListener('change', sync);
+  }
+
   /* ---------------------------------------------------------------------------------------------------------------
-     Demo data (local preview only, ?demo=incident or ?demo=outage)
+     Demo data (local preview only): ?demo=ok, degraded, down (or outage), incident, maintenance, error
      ------------------------------------------------------------------------------------------------------------- */
   const ago = (min) => new Date(Date.now() - min * 60e3);
   const daysAgoKey = (n) => isoDay(Date.now() - n * DAY_MS);
@@ -1095,6 +1384,7 @@
       S.starts[s.slug] = start;
       s.status = 'up';
       s.dailyMinutesDown = {};
+      if (!S.rt[s.slug]) S.rt[s.slug] = 380 + ((s.slug.length * 97) % 600);
     });
     const set = (slug, k, m) => {
       const s = S.summary.find((x) => x.slug === slug);
@@ -1108,11 +1398,19 @@
     set('activacion-de-licencias', daysAgoKey(20), 95);
     set('renovacion-de-licencias', daysAgoKey(20), 95);
     set('descargas-paquetes-nas', daysAgoKey(41), 7);
-    set('pagos', daysAgoKey(0), 23);
-    status('pagos', 'down');
-    if (DEMO === 'outage') {
+    // The newest check started a month ago: its first days have no data
+    S.starts['codigo-de-servidor-api'] = new Date(Date.now() - 52 * DAY_MS);
+    if (DEMO === 'incident' || DEMO === 'down' || DEMO === 'outage') {
+      set('pagos', daysAgoKey(0), 23);
+      status('pagos', 'down');
+    }
+    if (DEMO === 'outage' || DEMO === 'degraded') {
       status('descargas-paquetes-nas', 'degraded');
       set('descargas-paquetes-nas', daysAgoKey(0), 9);
+    }
+    if (DEMO === 'maintenance') {
+      status('activacion-de-licencias', 'down');
+      status('renovacion-de-licencias', 'down');
     }
   }
 
@@ -1121,7 +1419,8 @@
     const auto = (name, url, down) =>
       `In [\`1a2b3c4\`](https://github.com/${OWNER}/${REPO}/commit/1a2b3c4d), ${name} (${url}) ${down ? 'was **down**' : 'experienced **degraded performance**'}:\n- HTTP code: 0\n- Response time: 0 ms\n`;
     const iso = (d) => d.toISOString();
-    const tomorrow2 = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 2, 2));
+    const inTwoDays = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 2, 2));
+    const maintStart = DEMO === 'maintenance' ? ago(25) : inTwoDays;
     const list = [
       {
         number: 14,
@@ -1131,9 +1430,9 @@
         created_at: iso(ago(60 * 5)),
         closed_at: null,
         comments: 0,
-        body: `<!-- start: ${iso(tomorrow2)} -->\n<!-- end: ${iso(new Date(tomorrow2.getTime() + 3600e3))} -->\n<!-- expectedDown: activacion-de-licencias, renovacion-de-licencias -->\nLa activación y la renovación pueden no responder durante unos minutos. Tu servidor sigue funcionando.`,
+        body: `<!-- start: ${iso(maintStart)} -->\n<!-- end: ${iso(new Date(maintStart.getTime() + 3600e3))} -->\n<!-- expectedDown: activacion-de-licencias, renovacion-de-licencias -->\nLa activación y la renovación pueden no responder durante unos minutos. Tu servidor sigue funcionando.`,
       },
-      DEMO === 'outage'
+      DEMO === 'outage' || DEMO === 'degraded'
         ? {
             number: 13,
             title: '⚠️ Descargas (paquetes NAS) has degraded performance',
@@ -1145,18 +1444,30 @@
             body: auto('Descargas (paquetes NAS)', 'https://licenses.kumoyami.com/v1/packages', false),
           }
         : null,
+      DEMO === 'incident' || DEMO === 'down' || DEMO === 'outage'
+        ? {
+            number: 12,
+            title: DEMO === 'incident' ? 'Los pagos no se completan' : '🛑 Pagos is down',
+            state: 'open',
+            labels: L('status', 'pagos'),
+            created_at: iso(ago(23)),
+            closed_at: null,
+            comments: DEMO === 'incident' ? 1 : 0,
+            body:
+              DEMO === 'incident'
+                ? 'La página de compra no carga los planes, así que no se puede pagar. Lo estamos mirando.\n\nTu servidor y tus licencias **no se ven afectados**.'
+                : auto('Pagos', 'https://kumoyami.com/buy/pro', true),
+          }
+        : null,
       {
-        number: 12,
-        title: DEMO === 'outage' ? '🛑 Pagos is down' : 'Los pagos no se completan',
+        number: 15,
+        title: '🛑 Activación de licencias (nombre antiguo) is down',
         state: 'open',
-        labels: L('status', 'pagos'),
-        created_at: iso(ago(23)),
+        labels: L('status', 'activacion-de-licencias-nombre-antiguo'),
+        created_at: iso(ago(60 * 20)),
         closed_at: null,
-        comments: DEMO === 'outage' ? 0 : 1,
-        body:
-          DEMO === 'outage'
-            ? auto('Pagos', 'https://kumoyami.com/buy/pro', true)
-            : 'La página de compra no carga los planes, así que no se puede pagar. Lo estamos mirando.\n\nTu servidor y tus licencias **no se ven afectados**.',
+        comments: 0,
+        body: auto('Activación de licencias (nombre antiguo)', 'https://licencias.kumoyami.com/v1/activate', true),
       },
       {
         number: 11,
@@ -1224,6 +1535,7 @@
     S.lang = readLang();
     applyStatic();
     wireTooltip();
+    wireTicker();
     $('#lang-toggle').addEventListener('click', () => setLang(S.lang === 'es' ? 'en' : 'es', true));
     document.querySelectorAll('.lang-switch button').forEach((b) => b.addEventListener('click', () => setLang(b.dataset.lang, true)));
     render();

@@ -18,21 +18,22 @@
   <meta property="og:description" content="Si la web, las cuentas, las licencias, los pagos y las descargas de KumoYami funcionan ahora mismo.">
   <meta property="og:url" content="https://status.kumoyami.com/">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://status.kumoyami.com/og-image.png">
+  <meta property="og:image" content="https://status.kumoyami.com/og-image.png?v=4">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preload" href="fonts/zen-kaku-gothic-new-400.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/zen-kaku-gothic-new-700.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="style.css">
-  <script src="app.js" defer></script>
+  <link rel="preload" href="fonts/zen-kaku-gothic-new-900.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=4">
+  <script src="app.js?v=4" defer></script>
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Saltar al contenido</a>
 
   <header class="top">
     <div class="top-row">
-      <a class="brand" href="/" data-i18n-aria="brandLabel" aria-label="KumoYami: estado del servicio">
-        <img src="logo-kumo.svg?v=2" alt="" width="90" height="28">
+      <a class="brand" href="/" data-i18n-aria="brandLabel" aria-label="KumoYami Status: estado del servicio">
+        <img src="status-kumo.svg?v=1" alt="" width="93" height="29">
         <span class="brand-sep" aria-hidden="true"></span>
         <span class="brand-page" data-i18n="navStatus">Estado</span>
       </a>
@@ -50,27 +51,45 @@
   </header>
 
   <main id="main" tabindex="-1">
-    <section class="hero wrap" aria-labelledby="overall-title">
-      <span class="hero-kanji" aria-hidden="true">雲闇</span>
-      <p class="eyebrow" data-i18n="eyebrow">Estado del servicio</p>
-      <div class="overall" id="overall" data-state="loading">
-        <span class="dot" aria-hidden="true"></span>
-        <h1 id="overall-title" data-i18n="loading">Comprobando…</h1>
+    <section class="hero" data-t="none" aria-labelledby="overall-title">
+      <div class="wrap hero-in">
+        <div class="hero-main">
+        <p class="eyebrow"><span class="ln" aria-hidden="true"></span><span data-i18n="eyebrow">Estado del servicio</span></p>
+        <div class="overall" id="overall" data-state="loading">
+          <p class="overall-pill"><span class="pill" id="overall-pill"><span class="st" aria-hidden="true"></span><span id="overall-word">Comprobando</span></span></p>
+          <h1 id="overall-title" data-i18n="loading">Comprobando…</h1>
+          <p class="overall-sub" id="overall-sub" aria-live="polite"></p>
+        </div>
+        <p class="checked"><span data-i18n="checkedEvery">Comprobado cada 5 minutos desde fuera de nuestros servidores</span><span id="last-check"></span></p>
+        </div>
+        <div class="summary" id="summary" hidden></div>
+        <ul class="tiles" id="tiles" data-i18n-aria="tilesLabel" aria-label="Resumen por servicio" hidden></ul>
       </div>
-      <p class="overall-sub" id="overall-sub" aria-live="polite"></p>
-      <p class="checked"><span data-i18n="checkedEvery">Comprobado cada 5 minutos desde fuera de nuestros servidores</span><span id="last-check"></span></p>
+    </section>
+
+    <section class="ticker" id="ticker" aria-labelledby="ticker-title" hidden>
+      <div class="ticker-head">
+        <h2 class="ticker-label" id="ticker-title" data-i18n="tickerTitle">Respuesta</h2>
+        <button type="button" class="ticker-pause" id="ticker-pause" aria-pressed="false" data-i18n-aria="tickerPause" aria-label="Detener el desplazamiento">
+          <svg class="i-pause" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M5.5 3.5v9M10.5 3.5v9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <svg class="i-play" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M5 3.5v9l7-4.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="ticker-view" id="ticker-view">
+        <div class="ticker-track" id="ticker-track"></div>
+      </div>
     </section>
 
     <div class="wrap" id="maintenance"></div>
 
-    <section class="wrap block" aria-labelledby="services-title">
+    <section class="wrap block" id="services" aria-labelledby="services-title">
       <div class="block-head">
-        <h2 id="services-title"><span class="num" aria-hidden="true">01</span><span data-i18n="servicesTitle">Servicios</span></h2>
+        <h2 id="services-title" class="sec-title"><span class="sec-num" aria-hidden="true">01</span><span class="sec-t" data-i18n="servicesTitle">Servicios</span></h2>
         <ul class="legend" data-i18n-aria="legendLabel" aria-label="Leyenda de las barras">
-          <li><span class="sw sw-ok" aria-hidden="true"></span><span data-i18n="legendOk">Sin incidencias</span></li>
-          <li><span class="sw sw-minor" aria-hidden="true"></span><span data-i18n="legendMinor">Breve</span></li>
-          <li><span class="sw sw-major" aria-hidden="true"></span><span data-i18n="legendMajor">Caída</span></li>
-          <li><span class="sw sw-none" aria-hidden="true"></span><span data-i18n="legendNone">Sin datos</span></li>
+          <li><span class="sw" data-l="ok" aria-hidden="true"></span><span data-i18n="legendOk">Sin incidencias</span></li>
+          <li><span class="sw" data-l="minor" aria-hidden="true"></span><span data-i18n="legendMinor">Breve</span></li>
+          <li><span class="sw" data-l="major" aria-hidden="true"></span><span data-i18n="legendMajor">Caída</span></li>
+          <li><span class="sw" data-l="none" aria-hidden="true"></span><span data-i18n="legendNone">Sin datos</span></li>
           <li><span class="legend-pct" aria-hidden="true">%</span><span data-i18n="legendPct">Disponibilidad en 90 días</span></li>
         </ul>
       </div>
@@ -82,12 +101,12 @@
         <div class="skeleton" aria-hidden="true"></div>
       </div>
       <div class="axis" aria-hidden="true"><span id="axis-start" data-i18n="axisStart90">Hace 90 días</span><span data-i18n="axisToday">Hoy</span></div>
-      <p class="note" data-i18n="note">Tu servidor sigue funcionando hasta 30 días aunque kumoyami.com no responda: solo necesita conectarse para renovar su licencia. Tu propio servidor no aparece aquí.</p>
+      <p class="note"><svg class="note-i" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 11v5M12 7.5v.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span data-i18n="note">Tu servidor sigue funcionando hasta 30 días aunque kumoyami.com no responda: solo necesita conectarse para renovar su licencia. Tu propio servidor no aparece aquí.</span></p>
     </section>
 
-    <section class="wrap block" aria-labelledby="incidents-title">
+    <section class="wrap block" id="history" aria-labelledby="incidents-title">
       <div class="block-head">
-        <h2 id="incidents-title"><span class="num" aria-hidden="true">02</span><span data-i18n="incidentsTitle">Incidencias recientes</span></h2>
+        <h2 id="incidents-title" class="sec-title"><span class="sec-num" aria-hidden="true">02</span><span class="sec-t" data-i18n="incidentsTitle">Incidencias recientes</span></h2>
       </div>
       <div id="incidents" aria-live="polite">
         <p class="quiet" data-i18n="incidentsLoading">Cargando las incidencias…</p>
@@ -102,9 +121,8 @@
   <footer class="foot">
     <div class="foot-grid">
       <div class="foot-brand">
-        <img src="logo-kumo.svg?v=2" alt="KumoYami" width="84" height="26">
+        <img src="status-kumo.svg?v=1" alt="KumoYami Status" width="90" height="28">
         <p data-i18n="tagline">Nube y oscuridad. Tus archivos, en tu servidor.</p>
-        <span class="foot-kanji" aria-hidden="true">雲闇</span>
       </div>
       <nav class="foot-links" data-i18n-aria="footNavLabel" aria-label="KumoYami">
         <a href="https://kumoyami.com/" data-i18n-href="homeHref">kumoyami.com</a>
