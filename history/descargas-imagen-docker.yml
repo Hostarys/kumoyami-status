@@ -1,7 +1,7 @@
 url: https://licenses.kumoyami.com/v1/registry/token?service=registry.kumoyami.com&scope=repository:kumoyami:pull
 status: up
 code: 200
-responseTime: 409
-lastUpdated: 2026-11-13T07:31:33.316Z
+responseTime: 709
+lastUpdated: 2026-11-14T02:55:10.107Z
 startTime: 2026-11-12T09:24:40.536Z
 generator: Upptime <https://github.com/upptime/upptime>
