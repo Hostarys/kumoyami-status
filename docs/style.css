@@ -1,7 +1,11 @@
-/* status.kumoyami.com on the KumoYami dark brand (KumoYami/kumoyami-ds.html: the greys from Yami to Kumo, Zen Kaku
-   Gothic New, JetBrains Mono for data). This page alone gives each state a colour: green operational, amber degraded or
-   brief, red down, violet maintenance, grey no data. The shape of the indicator stays as a second cue for colour-blind
-   people (DS «09 Pills»): a filled circle, a half circle, an X, a dashed ring, a ring with a pulse. */
+/* status.kumoyami.com on the KumoYami brand (KumoYami/kumoyami-ds.html: the greys from Yami to Kumo, Zen Kaku Gothic
+   New). Dark by default, light when the system asks for it. This page alone gives each state a colour: green
+   operational, amber degraded or brief, red down, blue maintenance, grey no data. The colour is never alone: every
+   state also has a shape (a filled circle, a half circle, an X, a dashed ring, a ring with a dot) and a word, and the
+   days of the bars a fill (solid, half, striped, a low stub).
+   One type scale in rem (13 labels, 14, 16, 20 and the title), one spacing scale (4, 8, 12, 16, 24, 32, 48, 64), radii
+   4 / 8 / 14. Tracked capitals (the DS «ky-label») only on the small status chips; every other label is sentence case
+   (contexto/marca.md, «Sistema de interfaz»). */
 
 @font-face {
   font-family: 'Zen Kaku Gothic New';
@@ -21,12 +25,7 @@
   font-weight: 700;
   font-display: swap;
 }
-@font-face {
-  font-family: 'Zen Kaku Gothic New';
-  src: url('fonts/zen-kaku-gothic-new-900.woff2') format('woff2');
-  font-weight: 900;
-  font-display: swap;
-}
+/* Only for `code` inside an incident: downloaded when one has it */
 @font-face {
   font-family: 'JetBrains Mono';
   src: url('fonts/jetbrains-mono-400.woff2') format('woff2');
@@ -44,7 +43,7 @@
   --kiri: #a3a3a8;
   --kasumi: #d6d6d3;
   --kumo: #f4f4f2;
-  /* Semantic roles (dark mode) */
+  /* Semantic roles, dark */
   --bg: var(--yami);
   --surface: var(--sumi);
   --raised: var(--kage);
@@ -53,27 +52,62 @@
   --text: var(--kumo);
   --text-2: var(--kiri);
   --text-3: var(--hai);
-  /* The state colours: calm, not neon, made for the dark background */
+  /* The state colours: calm, not neon */
   --ok: #22c55e;
   --warn: #f59e0b;
   --down: #ef4444;
-  --maint: #a78bfa;
+  --maint: #60a5fa;
   --none: #6b6b72;
   /* The days of the bars */
-  --day-ok: color-mix(in srgb, var(--ok) 74%, var(--sumi));
+  --day-ok: color-mix(in srgb, var(--ok) 74%, var(--surface));
   --day-warn: var(--warn);
   --day-down: var(--down);
-  --day-none: var(--nezumi);
+  --day-none: var(--line-2);
 
   --f-body: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --f-code: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --fs-label: 0.8125rem;
+  --fs-1: 0.875rem;
+  --fs-2: 1rem;
+  --fs-3: 1.25rem;
   --r-1: 4px;
   --r-2: 8px;
-  --r-3: 16px;
+  --r-3: 14px;
   --r-pill: 999px;
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --top-h: 64px;
+  --gutter: 16px;
   color-scheme: dark;
+}
+@media (min-width: 480px) {
+  :root {
+    --gutter: 24px;
+  }
+}
+@media (min-width: 760px) {
+  :root {
+    --gutter: 40px;
+  }
+}
+/* Light: the same greys the other way round; the state colours one step darker so they hold 3:1 on white */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: var(--kumo);
+    --surface: #ffffff;
+    --raised: #e9e9e6;
+    --line: #e1e1dd;
+    --line-2: #c4c4c0;
+    --text: var(--yami);
+    --text-2: var(--nezumi);
+    --text-3: #5d5d63;
+    --ok: #16a34a;
+    --warn: #d97706;
+    --down: #dc2626;
+    --maint: #2563eb;
+    --none: #8a8a90;
+    --day-ok: color-mix(in srgb, var(--ok) 82%, var(--surface));
+    color-scheme: light;
+  }
 }
 
 /* A tone sets --c, its colour; everything tinted reads it */
@@ -106,6 +140,7 @@
 html {
   background: var(--bg);
   -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
   scroll-padding-top: calc(var(--top-h) + 16px);
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -116,13 +151,15 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   background: var(--bg);
   color: var(--text);
   font-family: var(--f-body);
-  font-size: 16px;
+  font-size: var(--fs-2);
   line-height: 1.6;
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: clip;
@@ -132,16 +169,21 @@ main {
   outline: none;
 }
 ::selection {
-  background: var(--kumo);
-  color: var(--yami);
+  background: var(--text);
+  color: var(--bg);
 }
 :focus-visible {
-  outline: 2px solid var(--kumo);
-  outline-offset: 3px;
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
   border-radius: var(--r-1);
 }
 a {
   color: inherit;
+  text-underline-offset: 3px;
+}
+a,
+button {
+  touch-action: manipulation;
 }
 h1,
 h2,
@@ -166,58 +208,21 @@ button {
   white-space: nowrap;
 }
 
-/* Scrollbars of the KumoYami web (src/styles/globals.css): a thin pill thumb in the greys, no arrows, no track */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-button {
-  display: none;
-}
-::-webkit-scrollbar-track,
-::-webkit-scrollbar-corner {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background-color: var(--nezumi);
-  border-radius: var(--r-pill);
-}
-::-webkit-scrollbar-thumb:hover,
-::-webkit-scrollbar-thumb:active {
-  background-color: var(--hai);
-}
-@supports not selector(::-webkit-scrollbar) {
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--nezumi) transparent;
-  }
-}
-
 .wrap {
   width: min(100%, 1120px);
   margin-inline: auto;
-  padding-inline: 16px;
-}
-@media (min-width: 480px) {
-  .wrap {
-    padding-inline: 24px;
-  }
-}
-@media (min-width: 760px) {
-  .wrap {
-    padding-inline: 40px;
-  }
+  padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));
 }
 
 .skip {
   position: absolute;
   left: 12px;
-  top: -60px;
+  top: -64px;
   z-index: 100;
-  padding: 8px 14px;
+  padding: 8px 16px;
   border-radius: var(--r-1);
-  background: var(--kumo);
-  color: var(--yami);
+  background: var(--text);
+  color: var(--bg);
   font-weight: 700;
   text-decoration: none;
 }
@@ -227,18 +232,19 @@ button {
 
 /* ---- State indicators: colour, and the shape as a second cue ---- */
 .st {
-  --sz: 9px;
+  --sz: 10px;
   position: relative;
   flex: none;
   display: inline-block;
   width: var(--sz);
   height: var(--sz);
-  color: var(--c, var(--kumo));
+  color: var(--c, var(--text));
 }
 .st-up {
   border-radius: 50%;
   background: currentColor;
 }
+/* Ongoing (an incident being looked at, or the page still checking): a ring with a dot in it */
 .st-deploy {
   border-radius: 50%;
   border: 1.5px solid currentColor;
@@ -246,16 +252,12 @@ button {
 .st-deploy::after {
   content: '';
   position: absolute;
-  inset: -1.5px;
+  inset: 0;
+  margin: auto;
+  width: 40%;
+  height: 40%;
   border-radius: 50%;
-  border: 1.5px solid currentColor;
-  animation: ping 1.6s var(--ease) infinite;
-}
-@keyframes ping {
-  to {
-    transform: scale(2.4);
-    opacity: 0;
-  }
+  background: currentColor;
 }
 .st-degraded {
   border-radius: 50%;
@@ -282,27 +284,26 @@ button {
   transform: translateX(-50%) rotate(-45deg);
 }
 
-/* ---- Pills: tinted with the colour of their state ---- */
+/* ---- Pills: the state in words, tinted with its colour ---- */
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 28px;
-  padding: 0 12px;
-  border: 1px solid color-mix(in srgb, var(--c, var(--hai)) 38%, transparent);
+  min-height: 28px;
+  padding: 4px 12px;
+  border: 1px solid color-mix(in srgb, var(--c, var(--none)) 40%, transparent);
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--c, var(--hai)) 12%, transparent);
-  color: color-mix(in srgb, var(--c, var(--kasumi)) 62%, var(--kumo));
-  font-size: 13px;
+  background: color-mix(in srgb, var(--c, var(--none)) 12%, transparent);
+  color: color-mix(in srgb, var(--c, var(--text-2)) 62%, var(--text));
+  font-size: var(--fs-1);
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.2;
   white-space: nowrap;
 }
 .pill.sm {
-  height: 24px;
-  padding: 0 10px;
-  gap: 7px;
-  font-size: 11px;
+  min-height: 24px;
+  padding: 4px 10px;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -311,29 +312,14 @@ button {
   --sz: 8px;
 }
 .pill-lg {
-  height: 36px;
-  padding: 0 16px 0 14px;
-  gap: 11px;
-  font-size: 14px;
+  min-height: 36px;
+  padding: 4px 16px 4px 12px;
+  gap: 12px;
+  font-size: var(--fs-2);
   font-weight: 700;
-  letter-spacing: 0.01em;
 }
 .pill-lg .st {
-  --sz: 11px;
-}
-/* The big state breathes a soft halo of its colour */
-.pill-lg .st-up {
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 55%, transparent);
-  animation: halo 2.6s var(--ease) infinite;
-}
-@keyframes halo {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 50%, transparent);
-  }
-  70%,
-  100% {
-    box-shadow: 0 0 0 9px color-mix(in srgb, var(--c) 0%, transparent);
-  }
+  --sz: 12px;
 }
 
 /* ---- Header: the KumoYami Status lockup, the language and the way back ---- */
@@ -341,36 +327,24 @@ button {
   position: sticky;
   top: 0;
   z-index: 20;
-  border-bottom: 1px solid rgb(255 255 255 / 0.06);
-  background: rgb(11 11 12 / 0.78);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  backdrop-filter: blur(16px) saturate(140%);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
 }
 .top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  width: min(100%, 1400px);
-  height: var(--top-h);
+  width: min(100%, 1120px);
+  min-height: var(--top-h);
   margin-inline: auto;
-  padding-inline: 16px;
-}
-@media (min-width: 760px) {
-  .top-row {
-    padding-inline: 40px;
-  }
-}
-@media (min-width: 1100px) {
-  .top-row {
-    padding-inline: 56px;
-  }
+  padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));
 }
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
   min-width: 0;
+  min-height: 44px;
   text-decoration: none;
 }
 .brand img {
@@ -378,57 +352,54 @@ button {
   width: 93px;
   height: auto;
 }
-.brand-sep {
-  width: 1px;
-  height: 22px;
-  background: var(--line-2);
-}
-.brand-page {
-  color: var(--kasumi);
-  font-size: 15px;
-  font-weight: 500;
-}
 .top-nav {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .lang-toggle,
 .back {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 40px;
+  gap: 8px;
+  min-height: 44px;
   padding: 0 12px;
   border: 0;
   border-radius: var(--r-2);
   background: none;
-  color: var(--kiri);
-  font-size: 14px;
+  color: var(--text-2);
+  font-size: var(--fs-1);
   font-weight: 500;
   text-decoration: none;
   cursor: pointer;
+  user-select: none;
   transition:
-    color 0.2s var(--ease),
-    background-color 0.2s var(--ease),
-    border-color 0.2s var(--ease);
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 .lang-toggle span {
   font-weight: 700;
-  letter-spacing: 0.04em;
-}
-.lang-toggle:hover {
-  background: var(--surface);
-  color: var(--kumo);
 }
 .back {
   border: 1px solid var(--line-2);
-  color: var(--kasumi);
+  color: var(--text);
   font-weight: 700;
 }
-.back:hover {
-  border-color: var(--kiri);
-  color: var(--kumo);
+.lang-toggle:active {
+  background: var(--surface);
+}
+.back:active {
+  border-color: var(--text-2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .lang-toggle:hover {
+    background: var(--surface);
+    color: var(--text);
+  }
+  .back:hover {
+    border-color: var(--text-2);
+  }
 }
 @media (max-width: 479px) {
   .back-text {
@@ -440,15 +411,9 @@ button {
     white-space: nowrap;
   }
   .back {
-    width: 40px;
+    width: 44px;
     justify-content: center;
     padding: 0;
-  }
-  .lang-toggle {
-    padding: 0 10px;
-  }
-  .brand {
-    gap: 11px;
   }
   .brand img {
     width: 84px;
@@ -458,112 +423,45 @@ button {
   .lang-toggle svg {
     display: none;
   }
-  .brand-sep,
-  .brand-page {
-    display: none;
-  }
 }
 
-/* ---- Hero: the overall state, big and in its colour, the 90-day summary and one tile per group ---- */
+/* ---- Hero: the overall state, in words first and in its colour ---- */
 .hero {
-  position: relative;
-  overflow: hidden;
-  padding-top: 44px;
-  padding-bottom: 48px;
+  padding-block: 48px;
   border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--c, var(--none)) 6%, var(--bg));
 }
 @media (min-width: 760px) {
   .hero {
-    padding-top: 88px;
-    padding-bottom: 72px;
+    padding-block: 64px;
   }
-}
-/* A soft glow of the state colour, from the top left, and a faint grid fading out under it */
-.hero::before,
-.hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.hero::before {
-  background:
-    radial-gradient(56% 70% at 18% -8%, color-mix(in srgb, var(--c) 22%, transparent), transparent 72%),
-    radial-gradient(40% 50% at 92% 0%, color-mix(in srgb, var(--c) 8%, transparent), transparent 70%);
-  transition: background 0.6s var(--ease);
-}
-.hero::after {
-  background-image:
-    linear-gradient(to right, rgb(255 255 255 / 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(255 255 255 / 0.035) 1px, transparent 1px);
-  background-size: 48px 48px;
-  -webkit-mask-image: radial-gradient(70% 80% at 30% 0%, #000, transparent 75%);
-  mask-image: radial-gradient(70% 80% at 30% 0%, #000, transparent 75%);
-}
-.hero-in {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 32px;
-}
-@media (min-width: 960px) {
-  .hero-in {
-    grid-template-columns: minmax(0, 1fr) 360px;
-    align-items: end;
-    gap: 32px 56px;
-  }
-  .tiles {
-    grid-column: 1 / -1;
-  }
-}
-.eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text-2);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-.eyebrow .ln {
-  width: 28px;
-  height: 1px;
-  background: var(--text-3);
-}
-.overall {
-  margin-top: 28px;
 }
 .overall h1 {
-  max-width: 16ch;
-  margin-top: 20px;
-  font-size: clamp(40px, 8.4vw, 76px);
-  font-weight: 900;
-  line-height: 1.02;
-  letter-spacing: -0.035em;
+  max-width: 20ch;
+  margin-top: 16px;
+  font-size: clamp(2.25rem, 1.6rem + 2.4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
 .overall h1.is-long {
-  max-width: 22ch;
-  font-size: clamp(32px, 6.2vw, 54px);
-  line-height: 1.06;
+  max-width: 28ch;
+  font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  line-height: 1.15;
 }
 .overall[data-state='loading'] h1,
 .overall[data-state='unknown'] h1 {
   color: var(--text-2);
 }
 .overall-sub {
-  max-width: 620px;
-  margin-top: 18px;
+  max-width: 65ch;
+  margin-top: 12px;
   color: var(--text-2);
-  font-size: 17px;
-  line-height: 1.55;
-}
-@media (min-width: 760px) {
-  .overall-sub {
-    font-size: 19px;
-  }
+  font-size: var(--fs-3);
+  line-height: 1.5;
+  text-wrap: pretty;
 }
 .overall-sub:empty {
   display: none;
@@ -571,10 +469,10 @@ button {
 .checked {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 0;
-  margin-top: 18px;
+  gap: 4px 0;
+  margin-top: 24px;
   color: var(--text-3);
-  font-size: 13px;
+  font-size: var(--fs-1);
 }
 /* Wide: one line with a dot between; narrow: the time of the last check on its own line */
 #last-check {
@@ -589,371 +487,63 @@ button {
     margin-inline: 8px;
   }
 }
-
-/* The summary card: uptime over 90 days, how many work now, and every day of every service in one strip */
-.summary {
-  display: grid;
-  gap: 6px;
-  padding: 20px 20px 16px;
-  border: 1px solid rgb(255 255 255 / 0.07);
-  border-radius: var(--r-3);
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.015)), rgb(22 22 24 / 0.72);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 24px 60px -30px rgb(0 0 0 / 0.8);
-}
-@media (min-width: 760px) {
-  .summary {
-    padding: 24px 24px 18px;
-  }
-}
-.sum-label {
-  color: var(--text-3);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-.sum-pct {
-  font-family: var(--f-code);
-  font-size: 40px;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-}
-.sum-up {
+/* The data could not be refreshed: the page says so and how old what it shows is */
+.stale {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 9px;
-  color: var(--text-2);
-  font-size: 13.5px;
-}
-.sum-up .st {
-  --sz: 8px;
-}
-.strip-sum {
-  height: 40px;
+  gap: 4px 12px;
   margin-top: 12px;
-}
-.sum-axis {
-  display: flex;
-  justify-content: space-between;
-  color: var(--text-3);
-  font-size: 11.5px;
-}
-
-/* A strip of days in small (the summary and the tiles) */
-.strip {
-  --n: 90;
-  display: grid;
-  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
-  gap: 2px;
-}
-.strip i {
-  border-radius: 1px;
-  background: var(--day-ok);
-}
-@media (max-width: 719px) {
-  .strip-sum {
-    --n: 45;
-  }
-  .strip-sum i:nth-child(-n + 45) {
-    display: none;
-  }
-}
-.strip-tile {
-  --n: 30;
-  height: 18px;
-  gap: 1.5px;
-}
-
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.tiles li:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-}
-@media (min-width: 720px) {
-  .tiles {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 10px;
-    margin-top: 16px;
-  }
-  .tiles li:last-child:nth-child(odd) {
-    grid-column: auto;
-  }
-}
-.tile {
-  display: grid;
-  gap: 14px;
-  height: 100%;
-  padding: 15px 16px 14px;
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-radius: var(--r-3);
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.01)), var(--surface);
-  text-decoration: none;
-  transition:
-    background-color 0.2s var(--ease),
-    border-color 0.2s var(--ease),
-    transform 0.2s var(--ease);
-}
-.tile:hover {
-  border-color: rgb(255 255 255 / 0.14);
-  transform: translateY(-1px);
-}
-.tile-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-.tile-top .st {
-  --sz: 10px;
-}
-.tile-name {
-  overflow: hidden;
-  font-size: 15px;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.tile-pre {
-  color: var(--text-3);
-  font-weight: 500;
-}
-/* Narrow tiles drop the «KumoYami» prefix (the headings below keep it) */
-@media (max-width: 719px) {
-  .tile-pre {
-    display: none;
-  }
-}
-@media (min-width: 720px) and (max-width: 1099px) {
-  .tile-pre {
-    display: none;
-  }
-}
-.tile-foot {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 12.5px;
-}
-.tile-state {
   color: var(--text-2);
+  font-size: var(--fs-1);
 }
-.tile-pct {
-  color: var(--text-3);
-  font-family: var(--f-code);
-  font-size: 12px;
+.stale .st {
+  --c: var(--warn);
 }
-/* Anything but operational: the tile takes a tint and an edge of its colour */
-.tile:not([data-t='ok']) {
-  border-color: color-mix(in srgb, var(--c) 40%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--c) 14%, transparent), color-mix(in srgb, var(--c) 4%, transparent)),
-    var(--surface);
-}
-.tile:not([data-t='ok']) .tile-state {
-  color: color-mix(in srgb, var(--c) 62%, var(--kumo));
-  font-weight: 700;
-}
-
-/* ---- Ticker (DS «08 Ticker»): each service and its response time ---- */
-.ticker {
-  display: flex;
-  align-items: stretch;
-  border-bottom: 1px solid var(--line);
-  background: var(--bg);
-}
-.ticker-head {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 6px;
-  padding: 0 6px 0 16px;
-  border-right: 1px solid var(--line);
-}
-@media (min-width: 760px) {
-  .ticker-head {
-    padding-left: 40px;
-  }
-}
-@media (min-width: 1100px) {
-  .ticker-head {
-    padding-left: 56px;
-  }
-}
-.ticker-label {
-  color: var(--text-3);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-@media (max-width: 479px) {
-  .ticker-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-  .ticker-head {
-    padding-left: 6px;
-  }
-}
-.ticker-pause {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: var(--r-2);
-  background: none;
-  color: var(--text-3);
-  cursor: pointer;
-}
-.ticker-pause:hover {
-  background: var(--surface);
-  color: var(--kumo);
-}
-.ticker-pause .i-play,
-.ticker.is-paused .ticker-pause .i-pause {
-  display: none;
-}
-.ticker.is-paused .ticker-pause .i-play {
-  display: block;
-}
-.ticker-view {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-.ticker-view::before,
-.ticker-view::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  z-index: 1;
-  width: 64px;
-  pointer-events: none;
-}
-.ticker-view::before {
-  left: 0;
-  background: linear-gradient(to right, var(--bg), transparent);
-}
-.ticker-view::after {
-  right: 0;
-  background: linear-gradient(to left, var(--bg), transparent);
-}
-@media (min-width: 760px) {
-  .ticker-view::before,
-  .ticker-view::after {
-    width: 120px;
-  }
-}
-.ticker-track {
-  display: flex;
-  width: max-content;
-  animation: tick 48s linear infinite;
-}
-.ticker:hover .ticker-track,
-.ticker:focus-within .ticker-track,
-.ticker.is-paused .ticker-track {
-  animation-play-state: paused;
-}
-@keyframes tick {
-  to {
-    transform: translateX(-50%);
-  }
-}
-.ticker-list {
-  display: flex;
+.stale .link-btn {
   margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.ticker-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 15px 0 15px 26px;
-  color: var(--text-2);
-  font-size: 14px;
-  white-space: nowrap;
-}
-.ticker-item b {
-  color: var(--kumo);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-.ticker-item .ms {
-  color: var(--text-3);
-  font-family: var(--f-code);
-  font-size: 13px;
-}
-.ticker-item[data-s='down'] .ms {
-  color: color-mix(in srgb, var(--down) 70%, var(--kumo));
-}
-.ticker-item .sep {
-  width: 7px;
-  height: 7px;
-  margin-left: 14px;
-  background: var(--nezumi);
-  clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
-/* ---- Maintenance notices: violet, with the dashed line of «Pausado» ---- */
+/* ---- Maintenance notices: blue, with the dashed line of «Pausado» until they start ---- */
 #maintenance:empty {
   display: none;
 }
 #maintenance {
   display: grid;
   gap: 12px;
-  padding-top: 40px;
+  padding-top: 32px;
 }
 .notice {
   --c: var(--maint);
   display: grid;
   gap: 8px;
-  padding: 18px 20px 20px;
-  border: 1px dashed color-mix(in srgb, var(--c) 45%, transparent);
+  padding: 16px;
+  border: 1px dashed color-mix(in srgb, var(--c) 50%, transparent);
   border-radius: var(--r-3);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--c) 12%, transparent), color-mix(in srgb, var(--c) 3%, transparent) 60%),
-    var(--surface);
+  background: color-mix(in srgb, var(--c) 8%, var(--surface));
+}
+@media (min-width: 760px) {
+  .notice {
+    padding: 20px 24px;
+  }
 }
 .notice.is-now {
   border-style: solid;
-}
-.notice .st {
-  color: var(--c);
 }
 .notice-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 10px;
+  gap: 4px 12px;
+  font-size: var(--fs-1);
 }
 .notice-label {
-  color: color-mix(in srgb, var(--c) 65%, var(--kumo));
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  color: color-mix(in srgb, var(--c) 62%, var(--text));
+  font-size: var(--fs-label);
+  font-weight: 500;
 }
 .notice-when {
   color: var(--text-2);
-  font-family: var(--f-code);
-  font-size: 12.5px;
 }
 @media (min-width: 560px) {
   .notice-when {
@@ -961,9 +551,9 @@ button {
   }
 }
 .notice-title {
-  font-size: 18px;
+  font-size: var(--fs-2);
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 .notice .inc-body {
   margin-top: 0;
@@ -971,117 +561,128 @@ button {
 
 /* ---- Blocks ---- */
 .block {
-  padding-top: 64px;
+  padding-top: 48px;
 }
 @media (min-width: 760px) {
   .block {
-    padding-top: 88px;
+    padding-top: 64px;
   }
 }
 .block-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 14px 24px;
-  margin-bottom: 22px;
+  gap: 12px 24px;
+  margin-bottom: 16px;
 }
 .sec-title {
-  display: grid;
-  gap: 10px;
-  font-size: clamp(28px, 5vw, 36px);
-  font-weight: 900;
-  line-height: 1.05;
-  letter-spacing: -0.025em;
-}
-.sec-num {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--text-3);
-  font-family: var(--f-code);
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0.06em;
-}
-.sec-num::after {
-  content: '';
-  width: 28px;
-  height: 1px;
-  background: var(--line-2);
+  font-size: var(--fs-3);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 16px;
+  gap: 4px 16px;
   margin: 0;
   padding: 0;
   list-style: none;
   color: var(--text-3);
-  font-size: 12.5px;
+  font-size: var(--fs-label);
+  font-weight: 500;
 }
 .legend li {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
 }
-.legend-pct {
+.legend-unit {
   color: var(--text-2);
-  font-family: var(--f-code);
-  font-size: 12px;
+  font-weight: 700;
 }
 
-/* The days. Colour first; shape second: a brief incident fills only half its bar, a day without data is a low stub */
+/* The days. Colour first; the fill second: a brief incident fills half its bar, an outage is striped, a day without
+   data is a low stub */
 .sw,
-.day,
-.strip i {
+.day {
   background: var(--day-ok);
 }
 .sw {
-  width: 5px;
-  height: 14px;
-  border-radius: 1.5px;
+  width: 6px;
+  height: 16px;
+  border-radius: 2px;
 }
 .sw[data-l='minor'],
-.day[data-l='minor'],
-.strip i[data-l='minor'] {
-  background: linear-gradient(to top, var(--day-warn) 55%, color-mix(in srgb, var(--day-warn) 35%, transparent) 55%);
+.day[data-l='minor'] {
+  background: linear-gradient(to top, var(--day-warn) 55%, color-mix(in srgb, var(--day-warn) 30%, transparent) 55%);
 }
 .sw[data-l='major'],
-.day[data-l='major'],
-.strip i[data-l='major'] {
-  background: var(--day-down);
+.day[data-l='major'] {
+  background: repeating-linear-gradient(
+    to top,
+    var(--day-down) 0 3px,
+    color-mix(in srgb, var(--day-down) 35%, transparent) 3px 5px
+  );
 }
 .sw[data-l='none'],
-.day[data-l='none'],
-.strip i[data-l='none'] {
+.day[data-l='none'] {
   background: linear-gradient(to top, var(--day-none) 4px, transparent 4px);
 }
 
 /* ---- The services card: one row per group, its parts under a disclosure ---- */
 .card {
-  border: 1px solid rgb(255 255 255 / 0.06);
+  border: 1px solid var(--line);
   border-radius: var(--r-3);
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.025), transparent 240px), var(--surface);
+  background: var(--surface);
   overflow: hidden;
 }
+/* Loading: rows of the same shape as the real ones, shown only if the wait passes 300 ms */
 .skeleton {
-  height: 104px;
+  display: grid;
+  gap: 16px;
+  padding: 20px 16px;
   border-top: 1px solid var(--line);
-  background: linear-gradient(90deg, transparent 0, rgb(255 255 255 / 0.025) 50%, transparent 100%) no-repeat;
-  background-size: 40% 100%;
-  animation: shimmer 1.4s linear infinite;
+  opacity: 0;
+  animation: appear 0.2s ease-out 0.3s forwards;
 }
 .skeleton:first-child {
   border-top: 0;
 }
+.skeleton i {
+  display: block;
+  height: 16px;
+  width: min(40%, 220px);
+  border-radius: var(--r-1);
+  background: var(--raised);
+}
+.skeleton i + i {
+  width: 100%;
+  height: 32px;
+}
+@media (min-width: 760px) {
+  .skeleton {
+    padding: 24px;
+  }
+}
+@keyframes appear {
+  to {
+    opacity: 1;
+  }
+}
+/* The shimmer is the loader, like a spinner: it stays with reduced motion too */
+.skeleton i {
+  background: linear-gradient(90deg, var(--raised) 30%, color-mix(in srgb, var(--raised) 55%, var(--surface)) 50%, var(--raised) 70%)
+    0 0 / 300% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
 @keyframes shimmer {
   from {
-    background-position: -40% 0;
+    background-position: 100% 0;
   }
   to {
-    background-position: 140% 0;
+    background-position: 0 0;
   }
 }
 .group {
@@ -1092,57 +693,57 @@ button {
 .group:first-child {
   border-top: 0;
 }
-/* A group with a problem carries an edge and a faint wash of its colour */
+/* A group with a problem carries a faint wash of its colour (its pill says which) */
 .group:not([data-t='ok']):not([data-t='none']) {
-  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 7%, transparent), transparent 55%);
-}
-.group:not([data-t='ok']):not([data-t='none'])::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--c);
+  background: color-mix(in srgb, var(--c) 6%, var(--surface));
 }
 .row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px 16px;
-  padding: 18px 16px 20px;
+  padding: 16px 16px 20px;
 }
 @media (min-width: 760px) {
   .row {
-    padding: 22px 24px 24px;
+    padding: 20px 24px 24px;
   }
 }
 .row-name {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 2px 12px;
+  gap: 0 12px;
   min-width: 0;
 }
 .row-name h3,
 .row-name h4 {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--fs-2);
   font-weight: 700;
-  letter-spacing: -0.005em;
 }
 .row-desc {
   color: var(--text-3);
-  font-size: 13.5px;
+  font-size: var(--fs-1);
 }
 .row-state {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 16px;
   white-space: nowrap;
 }
-/* Narrow: the description takes its own line under the name; the uptime goes under the state */
+.stats {
+  display: inline-flex;
+  gap: 12px;
+  color: var(--text-2);
+  font-size: var(--fs-1);
+}
+.stats > span {
+  min-width: 7ch;
+  text-align: right;
+}
+/* Narrow: the description takes its own line under the name; the figures go under the state */
 @media (max-width: 559px) {
   .row-name {
     display: contents;
@@ -1164,53 +765,46 @@ button {
     grid-row: 1;
     justify-self: end;
   }
-  .row-state .uptime {
+  .row-state .stats {
     grid-column: 2;
     grid-row: 2;
-    align-self: baseline;
+    justify-self: end;
+  }
+  .stats > span {
+    min-width: 0;
   }
   .days-wrap {
     grid-row: 3;
   }
 }
-.uptime {
-  min-width: 6ch;
-  color: var(--text-2);
-  font-family: var(--f-code);
-  font-size: 13px;
-  text-align: right;
-}
-@media (max-width: 399px) {
-  .row-state .pill {
-    height: 26px;
-    padding: 0 10px;
-    font-size: 12.5px;
-  }
-}
 .days-wrap {
   grid-column: 1 / -1;
-  margin-top: 14px;
+  margin-top: 12px;
 }
 .days {
   display: grid;
   grid-template-columns: repeat(var(--n, 90), minmax(0, 1fr));
   gap: 2px;
-  height: 34px;
+  height: 32px;
   border-radius: var(--r-1);
   cursor: default;
   touch-action: pan-y;
 }
 .day {
   border-radius: 2px;
-  transition: opacity 0.15s var(--ease);
+  transition: opacity 0.15s ease;
 }
-.days:hover .day,
 .days.is-active .day {
   opacity: 0.4;
 }
+@media (hover: hover) and (pointer: fine) {
+  .days:hover .day {
+    opacity: 0.4;
+  }
+}
 .days .day.is-on {
   opacity: 1;
-  outline: 1px solid var(--kumo);
+  outline: 1px solid var(--text);
   outline-offset: 1px;
 }
 /* 90 days on wide screens, 60 and 30 as the room shrinks (the uptime stays the 90-day one) */
@@ -1226,41 +820,46 @@ button {
   .days {
     --n: 30;
     gap: 3px;
-    height: 30px;
   }
   .day:nth-child(-n + 60) {
     display: none;
   }
 }
 .sub .days {
-  height: 22px;
+  height: 24px;
 }
 
 .more {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 32px;
-  margin: -8px 16px 14px 8px;
-  padding: 4px 10px 4px 8px;
+  min-height: 44px;
+  margin: -12px 16px 8px 8px;
+  padding: 0 12px 0 8px;
   border: 0;
   border-radius: var(--r-2);
   background: none;
   color: var(--text-2);
-  font-size: 13.5px;
+  font-size: var(--fs-1);
   cursor: pointer;
+  user-select: none;
 }
 @media (min-width: 760px) {
   .more {
     margin-left: 16px;
   }
 }
-.more:hover {
+.more:active {
   background: var(--raised);
-  color: var(--kumo);
+}
+@media (hover: hover) and (pointer: fine) {
+  .more:hover {
+    background: var(--raised);
+    color: var(--text);
+  }
 }
 .more svg {
-  transition: transform 0.25s var(--ease);
+  transition: transform 0.2s var(--ease-out);
 }
 .more[aria-expanded='true'] svg {
   transform: rotate(90deg);
@@ -1268,12 +867,12 @@ button {
 .subs {
   margin: 0 8px 12px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-2);
   background: var(--bg);
 }
 @media (min-width: 760px) {
   .subs {
-    margin: 0 16px 18px;
+    margin: 0 16px 16px;
   }
 }
 .sub {
@@ -1283,82 +882,85 @@ button {
   border-top: 0;
 }
 .sub .row {
-  padding: 14px 14px 16px;
+  padding: 12px 12px 16px;
 }
 @media (min-width: 760px) {
   .sub .row {
-    padding: 14px 18px 16px;
+    padding: 12px 16px 16px;
   }
 }
 .sub h4 {
-  font-size: 15px;
   font-weight: 500;
-}
-.sub .pill {
-  height: 24px;
-  font-size: 12px;
 }
 
 .axis {
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
+  margin-top: 8px;
   padding-inline: 4px;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: var(--fs-label);
+  font-weight: 500;
 }
 .note {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   gap: 12px;
-  max-width: 700px;
-  margin-top: 28px;
+  max-width: 70ch;
+  margin-top: 24px;
   color: var(--text-2);
-  font-size: 14.5px;
 }
 .note-i {
   margin-top: 2px;
   color: var(--text-3);
 }
 
-/* Errors: a dashed line and the words */
+/* Errors: a dashed line, what happened, and a way to try again */
 .load-error {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
-  gap: 4px 14px;
+  gap: 4px 12px;
   margin: 16px;
-  padding: 18px 20px;
+  padding: 16px 20px;
   border: 1px dashed var(--line-2);
-  border-radius: 12px;
+  border-radius: var(--r-2);
   color: var(--text-2);
-  font-size: 14.5px;
 }
 .load-error .st {
-  margin-top: 7px;
+  margin-top: 8px;
 }
 .load-error-title {
-  color: var(--kumo);
+  color: var(--text);
   font-weight: 700;
 }
 .retry {
   grid-column: 2;
   justify-self: start;
-  margin-top: 10px;
-  min-height: 38px;
+  min-height: 44px;
+  margin-top: 8px;
   padding: 0 16px;
   border: 1px solid var(--line-2);
-  border-radius: var(--r-2);
+  border-radius: var(--r-1);
   background: none;
-  color: var(--kumo);
-  font-size: 14px;
+  color: var(--text);
   font-weight: 700;
   cursor: pointer;
+  user-select: none;
 }
-.retry:hover {
-  border-color: var(--kiri);
+.retry:active {
   background: var(--raised);
+}
+.retry[aria-disabled='true'] {
+  color: var(--text-3);
+  cursor: progress;
+}
+@media (hover: hover) and (pointer: fine) {
+  .retry:hover:not([aria-disabled='true']) {
+    border-color: var(--text-2);
+    background: var(--raised);
+  }
 }
 
 /* ---- Tooltip of a day ---- */
@@ -1366,14 +968,13 @@ button {
   position: fixed;
   z-index: 50;
   max-width: 240px;
-  padding: 9px 12px;
-  border: 1px solid var(--line-2);
-  border-radius: 10px;
+  padding: 8px 12px;
+  border-radius: var(--r-2);
   background: var(--raised);
-  color: var(--kumo);
-  font-size: 13px;
+  color: var(--text);
+  font-size: var(--fs-1);
   line-height: 1.45;
-  box-shadow: 0 12px 32px rgb(0 0 0 / 0.5);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
   pointer-events: none;
 }
 .tip strong {
@@ -1384,21 +985,26 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 2px;
-  color: var(--kasumi);
+  margin-top: 4px;
+  color: var(--text-2);
+}
+@media (forced-colors: active) {
+  .tip {
+    border: 1px solid CanvasText;
+  }
 }
 
 /* ---- Incidents: a calm timeline, its nodes in the colour of each incident ---- */
 .quiet {
   color: var(--text-3);
-  font-size: 14.5px;
 }
 .quiet.is-empty,
 .quiet.is-error {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 18px 20px;
+  gap: 8px 12px;
+  padding: 16px 20px;
   border: 1px solid var(--line);
   border-radius: var(--r-3);
   color: var(--text-2);
@@ -1406,6 +1012,9 @@ button {
 .quiet.is-error {
   border-style: dashed;
   border-color: var(--line-2);
+}
+.quiet .link-btn {
+  margin: 0;
 }
 .timeline {
   margin: 0;
@@ -1415,8 +1024,8 @@ button {
 .inc {
   position: relative;
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 12px;
 }
 @media (min-width: 760px) {
   .inc {
@@ -1427,9 +1036,9 @@ button {
 .inc::before {
   content: '';
   position: absolute;
-  left: 14.5px;
+  left: 15.5px;
   top: 32px;
-  bottom: -2px;
+  bottom: 0;
   width: 1px;
   background: var(--line);
 }
@@ -1439,31 +1048,26 @@ button {
 .inc-node {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
   border-radius: 50%;
   background: color-mix(in srgb, var(--c) 14%, var(--bg));
 }
-.inc.is-open .inc-node {
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 10%, transparent);
-}
 .inc-card {
   min-width: 0;
-  padding: 3px 0 36px;
+  padding: 4px 0 32px;
 }
 .inc.is-open .inc-card {
   margin-bottom: 24px;
-  padding: 18px 18px 20px;
-  border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
   border-radius: var(--r-3);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--c) 9%, transparent), transparent 55%),
-    var(--surface);
+  background: color-mix(in srgb, var(--c) 7%, var(--surface));
 }
 @media (min-width: 760px) {
   .inc.is-open .inc-card {
-    padding: 20px 24px 22px;
+    padding: 20px 24px;
   }
 }
 .inc-top {
@@ -1474,25 +1078,23 @@ button {
 }
 .inc-date {
   color: var(--text-3);
-  font-family: var(--f-code);
-  font-size: 12.5px;
+  font-size: var(--fs-1);
 }
 .inc-card h3 {
-  margin-top: 10px;
-  font-size: 18px;
+  margin-top: 8px;
+  font-size: var(--fs-2);
   font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: -0.005em;
+  line-height: 1.4;
 }
 .inc-meta {
   margin-top: 4px;
   color: var(--text-3);
-  font-size: 13.5px;
+  font-size: var(--fs-1);
 }
 .inc-body {
-  margin-top: 10px;
-  color: var(--kasumi);
-  font-size: 15px;
+  max-width: 70ch;
+  margin-top: 8px;
+  color: var(--text-2);
   overflow-wrap: anywhere;
 }
 .inc-body p + p,
@@ -1509,25 +1111,26 @@ button {
   color: var(--text-3);
 }
 .inc-body a {
-  color: var(--kumo);
+  color: var(--text);
   text-decoration-color: var(--text-3);
-  text-underline-offset: 3px;
 }
-.inc-body a:hover {
-  text-decoration-color: var(--kumo);
+@media (hover: hover) and (pointer: fine) {
+  .inc-body a:hover {
+    text-decoration-color: var(--text);
+  }
 }
 .inc-body code {
-  padding: 1px 5px;
+  padding: 0 4px;
   border-radius: var(--r-1);
   background: var(--raised);
   font-family: var(--f-code);
-  font-size: 0.88em;
+  font-size: 0.875em;
 }
 .updates {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   margin: 16px 0 0;
-  padding: 2px 0 2px 16px;
+  padding: 0 0 0 16px;
   border-left: 1px solid var(--line-2);
   list-style: none;
 }
@@ -1537,8 +1140,7 @@ button {
 .updates time {
   display: block;
   color: var(--text-3);
-  font-family: var(--f-code);
-  font-size: 12px;
+  font-size: var(--fs-1);
 }
 .updates .inc-body {
   margin-top: 4px;
@@ -1546,61 +1148,73 @@ button {
 .link-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  margin-top: 8px;
-  padding: 4px 0;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 0;
   border: 0;
   background: none;
   color: var(--text-2);
-  font-size: 13.5px;
+  font-size: var(--fs-1);
   font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--line-2);
   cursor: pointer;
 }
-.link-btn:hover {
-  color: var(--kumo);
+.link-btn:active {
+  color: var(--text);
+}
+.link-btn[aria-disabled='true'] {
+  color: var(--text-3);
+  text-decoration: none;
+  cursor: progress;
+}
+@media (hover: hover) and (pointer: fine) {
+  .link-btn:hover:not([aria-disabled='true']) {
+    color: var(--text);
+    text-decoration-color: var(--text-3);
+  }
+}
+.all-incidents {
+  margin-top: 8px;
+  font-size: var(--fs-1);
+}
+.all-incidents a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-2);
+  text-decoration-color: var(--line-2);
 }
 
 /* ---- Footer ---- */
 .foot {
-  margin-top: 96px;
+  margin-top: 64px;
   border-top: 1px solid var(--line);
 }
 .foot-grid,
 .foot-bottom {
-  width: min(100%, 1400px);
+  width: min(100%, 1120px);
   margin-inline: auto;
-  padding-inline: 16px;
-}
-@media (min-width: 760px) {
-  .foot-grid,
-  .foot-bottom {
-    padding-inline: 40px;
-  }
-}
-@media (min-width: 1100px) {
-  .foot-grid,
-  .foot-bottom {
-    padding-inline: 56px;
-  }
+  padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));
 }
 .foot-grid {
   display: grid;
-  gap: 28px;
+  gap: 24px;
   padding-top: 48px;
-  padding-bottom: 36px;
+  padding-bottom: 32px;
 }
 @media (min-width: 760px) {
   .foot-grid {
     grid-template-columns: 1fr auto;
     align-items: start;
-    gap: 56px;
+    gap: 48px;
   }
 }
 .foot-brand {
   display: grid;
   justify-items: start;
-  gap: 14px;
+  gap: 12px;
 }
 .foot-brand img {
   display: block;
@@ -1608,28 +1222,28 @@ button {
   height: auto;
 }
 .foot-brand p {
-  max-width: 220px;
+  max-width: 240px;
   color: var(--text-3);
-  font-size: 14px;
+  font-size: var(--fs-1);
 }
 .foot-links {
   display: grid;
-  gap: 2px 36px;
+  gap: 0 32px;
   grid-template-columns: repeat(2, max-content);
 }
 .foot-links a {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
-  color: var(--kasumi);
-  font-size: 15px;
+  min-height: 44px;
+  color: var(--text-2);
   text-decoration: none;
 }
-.foot-links a:hover {
-  color: var(--kumo);
-  text-decoration: underline;
-  text-decoration-color: var(--text-3);
-  text-underline-offset: 4px;
+@media (hover: hover) and (pointer: fine) {
+  .foot-links a:hover {
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: var(--text-3);
+  }
 }
 @media (max-width: 400px) {
   .foot-links {
@@ -1642,116 +1256,116 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-top: 20px;
-  padding-bottom: 32px;
+  padding-top: 16px;
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
   color: var(--text-3);
-  font-size: 13px;
+  font-size: var(--fs-1);
 }
 .lang-switch {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 4px 4px 4px 12px;
+  gap: 4px;
+  padding: 0 0 0 12px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-2);
   color: var(--text-3);
 }
 .lang-switch svg {
-  margin-right: 6px;
+  margin-right: 4px;
 }
 .lang-switch button {
-  min-width: 40px;
-  min-height: 32px;
+  min-width: 44px;
+  min-height: 44px;
   border: 0;
-  border-radius: 7px;
+  border-radius: var(--r-2);
   background: none;
   color: var(--text-3);
-  font-size: 13px;
+  font-size: var(--fs-1);
   font-weight: 700;
   cursor: pointer;
-}
-.lang-switch button:hover {
-  color: var(--kumo);
+  user-select: none;
 }
 .lang-switch button[aria-pressed='true'] {
   background: var(--raised);
-  color: var(--kumo);
+  color: var(--text);
+}
+@media (hover: hover) and (pointer: fine) {
+  .lang-switch button:hover {
+    color: var(--text);
+  }
 }
 
 /* ---- 404 ---- */
 .lost {
-  display: block;
-  min-height: 46vh;
+  min-height: 40vh;
+  min-height: 40svh;
 }
 .lost h1 {
-  margin-top: 20px;
-  font-size: clamp(38px, 8.4vw, 72px);
-  font-weight: 900;
-  line-height: 1.02;
-  letter-spacing: -0.035em;
+  font-size: clamp(2.25rem, 1.6rem + 2.4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
 }
 .lost p {
-  max-width: 620px;
+  max-width: 65ch;
   margin-top: 16px;
   color: var(--text-2);
-  font-size: 17px;
+  font-size: var(--fs-3);
 }
 .lost a,
 .foot-bottom a {
-  color: var(--kumo);
-  text-underline-offset: 3px;
+  color: var(--text);
 }
 
+/* Reduced motion: what moves goes (smooth scroll, the chevron turning), the fades stay at 150 ms or less, and the
+   loading shimmer stays, as a spinner would (no global override) */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+  html {
+    scroll-behavior: auto;
   }
-  .st-deploy::after {
-    animation: none !important;
-    opacity: 0;
+  .more svg {
+    transition: none;
   }
-  .pill-lg .st-up {
-    animation: none !important;
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent);
-  }
-  .tile:hover {
-    transform: none;
-  }
-  /* The ticker stands still: one copy, scrolled by hand */
-  .ticker-track {
-    animation: none !important;
-  }
-  .ticker-view {
-    overflow-x: auto;
-  }
-  .ticker-view::before,
-  .ticker-view::after,
-  .ticker-list[aria-hidden='true'] {
-    display: none;
-  }
-  .ticker-list {
-    padding-right: 24px;
-  }
-}
-/* Narrow and still: no label shown and no button to show, so no head at all (the label still names the band) */
-@media (prefers-reduced-motion: reduce) and (max-width: 479px) {
-  .ticker-head {
-    display: none;
+  .skeleton {
+    animation-duration: 0.15s;
   }
 }
 
+/* Forced colours: visible edges on cards and buttons, the focus in Highlight; the bars and indicators keep their own
+   colours and shapes, and every state still has its word next to them */
 @media (forced-colors: active) {
   .day,
   .sw,
-  .strip i,
   .st,
   .st::before,
   .st::after {
     forced-color-adjust: none;
+  }
+  :focus-visible {
+    outline-color: Highlight;
+  }
+  .card,
+  .notice,
+  .subs,
+  .inc.is-open .inc-card,
+  .load-error,
+  .quiet.is-empty,
+  .quiet.is-error,
+  .pill {
+    border-color: CanvasText;
+  }
+  .lang-toggle,
+  .more,
+  .retry,
+  .lang-switch button {
+    border: 1px solid ButtonText;
+  }
+  .lang-switch button[aria-pressed='true'] {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .days .day.is-on {
+    outline-color: Highlight;
   }
 }
