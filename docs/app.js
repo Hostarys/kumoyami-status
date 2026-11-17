@@ -1,9 +1,10 @@
 /* status.kumoyami.com. Reads what Upptime commits to Hostarys/kumoyami-status (history/summary.json,
    history/<slug>.yml and api/<slug>/response-time.json, from raw.githubusercontent.com) and the incidents (issues
-   labelled «status» or «maintenance», from the public GitHub API), and draws them on the KumoYami brand.
-   No build step, no tracking, no cookies: the only thing kept in the browser is the chosen language (localStorage).
-   Each state has a colour (green, amber, red, blue, grey) and, so that colour is never alone, a word and the shape of
-   its indicator (DS «09 Pills»: filled circle, half circle, X, dashed ring, ring with a dot). */
+   labelled «status» or «maintenance», from the public GitHub API), and draws them on the KumoYami brand (dark, or
+   light when the system asks for it). No build step, no tracking, no cookies: the only thing kept in the browser is
+   the chosen language (localStorage). Each state has a colour (green, amber, red, blue, grey) and, so that colour is
+   never alone, a word and the shape of its indicator (DS «09 Pills»: filled circle, half circle, X, dashed ring, ring
+   with a pulse); the days of the bars have a fill too (solid, half, striped, a stub). */
 (() => {
   'use strict';
 
@@ -29,6 +30,7 @@
   // Only on a local preview: on status.kumoyami.com the parameter is ignored.
   const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   const DEMO = LOCAL ? params.get('demo') : null;
+  const reducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 
   /* ---------------------------------------------------------------------------------------------------------------
      Components: the Upptime sites (by slug) in the groups people think in, named after the KumoYami products (the
@@ -90,6 +92,20 @@
     'descargas-imagen-docker': { es: 'Imagen Docker', en: 'Docker image' },
     'descargas-paquetes-nas': { es: 'Paquetes para NAS', en: 'NAS packages' },
   };
+  // The short names of the response-time ticker
+  const SHORT = {
+    web: { es: 'KumoYami Web', en: 'KumoYami Web' },
+    'cuentas-e-inicio-de-sesion': { es: 'Mi cuenta', en: 'My account' },
+    'entrar-con-kumo-yami': { es: 'Entrar con KumoYami', en: 'Sign in' },
+    'activacion-de-licencias': { es: 'Activación', en: 'Activation' },
+    'renovacion-de-licencias': { es: 'Renovación', en: 'Renewal' },
+    'codigo-de-servidor': { es: 'Código de servidor', en: 'Server code' },
+    'codigo-de-servidor-api': { es: 'Búsqueda de código', en: 'Code lookup' },
+    pagos: { es: 'KumoYami Store', en: 'KumoYami Store' },
+    'descargas-imagen-docker': { es: 'Imagen Docker', en: 'Docker image' },
+    'descargas-paquetes-nas': { es: 'Paquetes NAS', en: 'NAS packages' },
+  };
+
   /* ---------------------------------------------------------------------------------------------------------------
      Texts
      ------------------------------------------------------------------------------------------------------------- */
@@ -109,6 +125,14 @@
       accountHref: 'https://kumoyami.com/account',
       loading: 'Comprobando…',
       checkedEvery: 'Comprobado cada 5 minutos desde fuera de nuestros servidores',
+      tilesLabel: 'Resumen por servicio',
+      sumLabel: 'Disponibilidad · 90 días',
+      sumUp: (n, all) => (n === all ? `${all} de ${all} servicios operativos` : `${n} de ${all} servicios operativos`),
+      tickerTitle: 'Respuesta',
+      tickerPause: 'Detener el movimiento de la página',
+      tickerPlay: 'Reanudar el movimiento de la página',
+      tickerList: 'Tiempo de respuesta de cada servicio en la última comprobación',
+      tickerNone: 'sin respuesta',
       servicesTitle: 'Servicios',
       legendLabel: 'Leyenda',
       legendOk: 'Sin incidencias',
@@ -116,7 +140,6 @@
       legendMajor: 'Caída',
       legendNone: 'Sin datos',
       legendPct: 'Disponibilidad en 90 días',
-      legendMs: 'Respuesta en la última comprobación',
       axisStart90: 'Hace 90 días',
       axisStart60: 'Hace 60 días',
       axisStart30: 'Hace 30 días',
@@ -155,7 +178,6 @@
       lastCheck: (rel) => `Última comprobación ${rel}`,
       state: { up: 'Operativo', degraded: 'Degradado', down: 'Caído', maintenance: 'Mantenimiento', unknown: 'Sin datos' },
       uptimeLabel: (since) => `Disponibilidad ${since ? `desde el ${since}` : 'en 90 días'}:`,
-      rtLabel: 'Respuesta en la última comprobación:',
       parts: (n) => `${n} servicios`,
       daysOk: (n) => `Últimos ${n} días: sin incidencias`,
       daysBad: (n, bad, total) => `Últimos ${n} días: ${bad} ${bad === 1 ? 'día' : 'días'} con problemas, ${total} en total`,
@@ -201,6 +223,14 @@
       accountHref: 'https://kumoyami.com/en/account',
       loading: 'Checking…',
       checkedEvery: 'Checked every 5 minutes from outside our servers',
+      tilesLabel: 'Summary by service',
+      sumLabel: 'Uptime · 90 days',
+      sumUp: (n, all) => `${n} of ${all} services operational`,
+      tickerTitle: 'Response',
+      tickerPause: 'Stop the motion on the page',
+      tickerPlay: 'Resume the motion on the page',
+      tickerList: 'Response time of each service at the last check',
+      tickerNone: 'no response',
       servicesTitle: 'Services',
       legendLabel: 'Legend',
       legendOk: 'No incidents',
@@ -208,7 +238,6 @@
       legendMajor: 'Outage',
       legendNone: 'No data',
       legendPct: 'Uptime over 90 days',
-      legendMs: 'Response at the last check',
       axisStart90: '90 days ago',
       axisStart60: '60 days ago',
       axisStart30: '30 days ago',
@@ -247,7 +276,6 @@
       lastCheck: (rel) => `Last check ${rel}`,
       state: { up: 'Operational', degraded: 'Degraded', down: 'Down', maintenance: 'Maintenance', unknown: 'No data' },
       uptimeLabel: (since) => `Uptime ${since ? `since ${since}` : 'over 90 days'}:`,
-      rtLabel: 'Response at the last check:',
       parts: (n) => `${n} services`,
       daysOk: (n) => `Last ${n} days: no incidents`,
       daysBad: (n, bad, total) => `Last ${n} days: ${bad} ${bad === 1 ? 'day' : 'days'} with problems, ${total} in total`,
@@ -298,6 +326,8 @@
     lastRun: null, // Date of the last finished check
     comments: {}, // issue number -> 'loading' | 'error' | array
     expanded: new Set(), // group ids open
+    tickerKey: '', // what the ticker shows, so it is only rebuilt (and its animation restarted) when that changes
+    tickerPaused: false, // the pause button stops every loop of the page: the ticker, the halo and the ping
   };
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -335,7 +365,7 @@
   }
 
   // The state indicator of the design system: the shape says the state (filled circle, half circle, dashed ring,
-  // ring with a dot, an X)
+  // ring with a pulse, an X)
   const SHAPE = {
     up: 'up',
     ok: 'up',
@@ -350,7 +380,7 @@
     loading: 'deploy',
     open: 'deploy',
   };
-  // And its colour: ok green, warn amber, down red, maint blue, none grey
+  // And its colour: ok green, warn amber, down red, maint violet, none grey
   const TONE = {
     up: 'ok',
     ok: 'ok',
@@ -368,6 +398,11 @@
   function pillEl(state, text, extra) {
     return h('span', { class: `pill t-${tone(state)}${extra ? ` ${extra}` : ''}`, 'data-s': state }, ind(state), h('span', { text }));
   }
+  // A strip of days (the 90-day bars in small): for the hero summary and the tiles
+  function stripEl(days, cls) {
+    return h('span', { class: `strip ${cls || ''}`, 'aria-hidden': 'true' }, days.map((d) => h('i', { 'data-l': d.l })));
+  }
+
   const isoDay = (d) => new Date(d).toISOString().slice(0, 10);
   const dayKeyToDate = (k) => new Date(`${k}T00:00:00Z`);
 
@@ -662,8 +697,6 @@
       status,
       days,
       pct,
-      // The response time of the last check; none while it does not answer
-      ms: status === 'down' ? null : S.rt[site.slug] || null,
       since: start && start.getTime() > windowStart ? start : null,
     };
   }
@@ -718,8 +751,6 @@
         days,
         pct: pcts.length ? pcts.reduce((a, b) => a + b, 0) / pcts.length : null,
         since: sinces.length ? new Date(Math.min(...sinces.map(Number))) : null,
-        // A group of one shows the response time of its only check; a bigger one shows it on each part
-        ms: members.length === 1 ? members[0].ms : null,
         members,
       };
     });
@@ -786,6 +817,8 @@
     });
     document.querySelectorAll('.lang-switch button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === S.lang)));
     $('#year').textContent = String(new Date().getFullYear());
+    S.tickerKey = '';
+    syncTickerButton();
   }
 
   function setLang(lang, remember) {
@@ -809,6 +842,10 @@
   function render() {
     renderOverall();
     renderStale();
+    const groups = S.summary ? groupsModel() : [];
+    renderSummary(groups);
+    renderTiles(groups);
+    renderTicker();
     renderGroups();
     renderMaintenance();
     renderIncidents();
@@ -819,7 +856,7 @@
   function setOverall(state, word, title, sub) {
     const box = $('#overall');
     box.dataset.state = state;
-    // The hero takes a faint wash of the colour of the state
+    // The hero takes the colour of the state (its glow)
     $('.hero').dataset.t = tone(state);
     const pill = $('#overall-pill');
     pill.className = `pill pill-lg t-${tone(state)}`;
@@ -919,21 +956,126 @@
     }
   }
 
+  // The hero's summary: uptime over 90 days of every service, how many work now, and all of them in one strip
+  function renderSummary(groups) {
+    const box = $('#summary');
+    if (!S.summary || !groups.length) {
+      box.hidden = true;
+      return;
+    }
+    const tx = t();
+    const sites = groups.flatMap((g) => g.members);
+    const pcts = sites.map((m) => m.pct).filter((p) => p != null);
+    const pct = pcts.length ? pcts.reduce((a, b) => a + b, 0) / pcts.length : null;
+    const up = sites.filter((m) => m.status === 'up').length;
+    // The indicator of the line is the worst state among them
+    const worst = sites.reduce((w, m) => (RANK[m.status] > RANK[w] ? m.status : w), 'up');
+    const days = groups[0].days.map((d, i) =>
+      groups.reduce((best, g) => (LRANK[g.days[i].l] > LRANK[best.l] ? g.days[i] : best), { k: d.k, m: 0, l: 'none' }),
+    );
+    box.hidden = false;
+    box.replaceChildren(
+      h('p', { class: 'sum-label', text: tx.sumLabel }),
+      h('p', { class: 'sum-pct', text: fmtPct(pct) }),
+      h('p', { class: 'sum-up' }, ind(worst), h('span', { text: tx.sumUp(up, sites.length) })),
+      stripEl(days, 'strip-sum'),
+      h('p', { class: 'sum-axis', 'aria-hidden': 'true' }, h('span', { text: tx.axisStart90 }), h('span', { text: tx.axisToday })),
+    );
+  }
+
+  // The hero's tiles: one per group, its state by colour and shape, the last 30 days, a link down to its history
+  function renderTiles(groups) {
+    const box = $('#tiles');
+    if (!S.summary) {
+      box.hidden = true;
+      return;
+    }
+    const tx = t();
+    box.hidden = false;
+    box.replaceChildren(
+      ...groups.map((g) =>
+        h(
+          'li',
+          null,
+          h(
+            'a',
+            { class: 'tile', href: `#g-${g.id}`, 'data-s': g.status, 'data-t': tone(g.status) },
+            h(
+              'span',
+              { class: 'tile-top' },
+              ind(g.status),
+              g.product
+                ? h('span', { class: 'tile-name' }, h('span', { class: 'tile-pre', text: 'KumoYami ' }), g.product)
+                : h('span', { class: 'tile-name', text: g.name }),
+            ),
+            stripEl(g.days.slice(-30), 'strip-tile'),
+            h(
+              'span',
+              { class: 'tile-foot' },
+              h('span', { class: 'tile-state', text: tx.state[g.status] }),
+              h('span', { class: 'tile-pct', text: fmtPct(g.pct) }),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // The DS ticker: each service, its state and its response time at the last check
+  function renderTicker() {
+    const sec = $('#ticker');
+    if (!S.summary || !S.summary.length) {
+      sec.hidden = true;
+      return;
+    }
+    const tx = t();
+    const items = S.summary.map((s) => {
+      const live = liveStatus(s);
+      const short = (SHORT[s.slug] && SHORT[s.slug][S.lang]) || siteName(s.slug, s.name);
+      const ms = S.rt[s.slug];
+      return { slug: s.slug, live, short, ms: live === 'down' || !ms ? null : ms };
+    });
+    const key = `${S.lang}|${items.map((i) => `${i.slug}:${i.live}:${i.ms}`).join(',')}`;
+    sec.hidden = false;
+    if (key === S.tickerKey) return;
+    S.tickerKey = key;
+    const list = (hidden) =>
+      h(
+        'ul',
+        hidden ? { class: 'ticker-list', 'aria-hidden': 'true' } : { class: 'ticker-list', 'aria-label': tx.tickerList },
+        items.map((i) =>
+          h(
+            'li',
+            { class: 'ticker-item', 'data-s': i.live },
+            ind(i.live),
+            h('b', { text: i.short }),
+            h('span', { class: 'visually-hidden', text: `${tx.state[i.live]}:` }),
+            h('span', { class: 'ms', text: i.ms ? fmtMs(i.ms) : tx.tickerNone }),
+            h('span', { class: 'sep', 'aria-hidden': 'true' }),
+          ),
+        ),
+      );
+    // Two copies make the loop seamless; the second one is for the eyes only
+    $('#ticker-track').replaceChildren(list(false), list(true));
+  }
+
+  function syncTickerButton() {
+    const b = $('#ticker-pause');
+    const sec = $('#ticker');
+    if (!b) return;
+    b.setAttribute('aria-label', S.tickerPaused ? t().tickerPlay : t().tickerPause);
+    sec.classList.toggle('is-paused', S.tickerPaused);
+    document.documentElement.classList.toggle('is-still', S.tickerPaused);
+  }
+
   function stateEl(status) {
     return pillEl(status, t().state[status], 'pill-row-state');
   }
 
-  // The figures of a row: uptime over 90 days and, when there is one, the response time of the last check. The legend
-  // explains the units; the hidden words say them to screen readers
-  function statsEl(m) {
-    const tx = t();
+  // The uptime of a row. The legend explains the «%»; the hidden words say it, and since when, to screen readers
+  function uptimeEl(m) {
     const since = m.since ? fmtDayShort(m.since) : null;
-    return h(
-      'span',
-      { class: 'stats' },
-      h('span', { class: 'uptime' }, h('span', { class: 'visually-hidden', text: `${tx.uptimeLabel(since)} ` }), fmtPct(m.pct)),
-      m.ms ? h('span', { class: 'rt' }, h('span', { class: 'visually-hidden', text: `${tx.rtLabel} ` }), fmtMs(m.ms)) : null,
-    );
+    return h('span', { class: 'uptime' }, h('span', { class: 'visually-hidden', text: `${t().uptimeLabel(since)} ` }), fmtPct(m.pct));
   }
 
   function daysEl(model) {
@@ -966,7 +1108,7 @@
         h(sub ? 'h4' : 'h3', { text: model.name }),
         !sub && model.desc ? h('span', { class: 'row-desc', text: model.desc }) : null,
       ),
-      h('div', { class: 'row-state' }, stateEl(model.status), statsEl(model)),
+      h('div', { class: 'row-state' }, stateEl(model.status), uptimeEl(model)),
       daysEl(model),
     );
   }
@@ -1293,6 +1435,17 @@
     });
   }
 
+  function wireTicker() {
+    $('#ticker-pause').addEventListener('click', () => {
+      S.tickerPaused = !S.tickerPaused;
+      syncTickerButton();
+    });
+    // With reduced motion the ticker never moves (CSS), so the button has nothing to stop
+    const sync = () => $('#ticker-pause').toggleAttribute('hidden', !!reducedMotion.matches);
+    sync();
+    if (reducedMotion.addEventListener) reducedMotion.addEventListener('change', sync);
+  }
+
   /* ---------------------------------------------------------------------------------------------------------------
      Demo data (local preview only): ?demo=ok, degraded, down (or outage), incident, maintenance, error
      ------------------------------------------------------------------------------------------------------------- */
@@ -1456,6 +1609,7 @@
     S.lang = readLang();
     applyStatic();
     wireTooltip();
+    wireTicker();
     $('#lang-toggle').addEventListener('click', () => setLang(S.lang === 'es' ? 'en' : 'es', true));
     document.querySelectorAll('.lang-switch button').forEach((b) => b.addEventListener('click', () => setLang(b.dataset.lang, true)));
     render();

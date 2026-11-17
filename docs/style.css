@@ -1,11 +1,10 @@
 /* status.kumoyami.com on the KumoYami brand (KumoYami/kumoyami-ds.html: the greys from Yami to Kumo, Zen Kaku Gothic
-   New). Dark by default, light when the system asks for it. This page alone gives each state a colour: green
-   operational, amber degraded or brief, red down, blue maintenance, grey no data. The colour is never alone: every
-   state also has a shape (a filled circle, a half circle, an X, a dashed ring, a ring with a dot) and a word, and the
-   days of the bars a fill (solid, half, striped, a low stub).
-   One type scale in rem (13 labels, 14, 16, 20 and the title), one spacing scale (4, 8, 12, 16, 24, 32, 48, 64), radii
-   4 / 8 / 14. Tracked capitals (the DS «ky-label») only on the small status chips; every other label is sentence case
-   (contexto/marca.md, «Sistema de interfaz»). */
+   New, JetBrains Mono for data): dark, or light when the system asks for it. This page alone gives each state a
+   colour: green operational, amber degraded or brief, red down, blue maintenance, grey no data. The colour is never
+   alone: every state also has a word and the shape of its indicator (DS «09 Pills»: a filled circle, a half circle, an
+   X, a dashed ring, a ring with a pulse), and the days of the bars a fill (solid, half, striped, a low stub).
+   Motion is part of the brand (the halo, the ping, the ticker): the pause button of the ticker stops all of it, and
+   with reduced motion every loop stands still (contexto/marca.md, «Sistema de interfaz»). */
 
 @font-face {
   font-family: 'Zen Kaku Gothic New';
@@ -25,7 +24,12 @@
   font-weight: 700;
   font-display: swap;
 }
-/* Only for `code` inside an incident: downloaded when one has it */
+@font-face {
+  font-family: 'Zen Kaku Gothic New';
+  src: url('fonts/zen-kaku-gothic-new-900.woff2') format('woff2');
+  font-weight: 900;
+  font-display: swap;
+}
 @font-face {
   font-family: 'JetBrains Mono';
   src: url('fonts/jetbrains-mono-400.woff2') format('woff2');
@@ -43,15 +47,21 @@
   --kiri: #a3a3a8;
   --kasumi: #d6d6d3;
   --kumo: #f4f4f2;
-  /* Semantic roles, dark */
+  /* Semantic roles (dark mode) */
   --bg: var(--yami);
   --surface: var(--sumi);
   --raised: var(--kage);
   --line: var(--kage);
   --line-2: var(--nezumi);
   --text: var(--kumo);
+  --text-soft: var(--kasumi);
   --text-2: var(--kiri);
   --text-3: var(--hai);
+  /* The ink of the sheens, hairlines and grid (white on dark, black on light), and the glass of the header */
+  --ink: 255 255 255;
+  --glass: 11 11 12;
+  --shadow-card: 0 24px 60px -30px rgb(0 0 0 / 0.8);
+  --shadow-tip: 0 12px 32px rgb(0 0 0 / 0.5);
   /* The state colours: calm, not neon */
   --ok: #22c55e;
   --warn: #f59e0b;
@@ -66,28 +76,13 @@
 
   --f-body: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --f-code: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
-  --fs-label: 0.8125rem;
-  --fs-1: 0.875rem;
-  --fs-2: 1rem;
-  --fs-3: 1.25rem;
   --r-1: 4px;
   --r-2: 8px;
   --r-3: 14px;
   --r-pill: 999px;
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --top-h: 64px;
-  --gutter: 16px;
   color-scheme: dark;
-}
-@media (min-width: 480px) {
-  :root {
-    --gutter: 24px;
-  }
-}
-@media (min-width: 760px) {
-  :root {
-    --gutter: 40px;
-  }
 }
 /* Light: the same greys the other way round; the state colours one step darker so they hold 3:1 on white */
 @media (prefers-color-scheme: light) {
@@ -98,8 +93,13 @@
     --line: #e1e1dd;
     --line-2: #c4c4c0;
     --text: var(--yami);
+    --text-soft: #2a2a2e;
     --text-2: var(--nezumi);
     --text-3: #5d5d63;
+    --ink: 11 11 12;
+    --glass: 244 244 242;
+    --shadow-card: 0 24px 60px -30px rgb(0 0 0 / 0.22);
+    --shadow-tip: 0 12px 32px rgb(0 0 0 / 0.16);
     --ok: #16a34a;
     --warn: #d97706;
     --down: #dc2626;
@@ -157,7 +157,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--f-body);
-  font-size: var(--fs-2);
+  font-size: 1rem;
   line-height: 1.6;
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
@@ -174,12 +174,11 @@ main {
 }
 :focus-visible {
   outline: 2px solid var(--text);
-  outline-offset: 2px;
+  outline-offset: 3px;
   border-radius: var(--r-1);
 }
 a {
   color: inherit;
-  text-underline-offset: 3px;
 }
 a,
 button {
@@ -208,18 +207,55 @@ button {
   white-space: nowrap;
 }
 
+/* Scrollbars of the KumoYami web (src/styles/globals.css): a thin pill thumb in the greys, no arrows, no track */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--line-2);
+  border-radius: var(--r-pill);
+}
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--text-3);
+}
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: var(--line-2) transparent;
+  }
+}
+
 .wrap {
+  --gutter: 16px;
   width: min(100%, 1120px);
   margin-inline: auto;
   padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));
+}
+@media (min-width: 480px) {
+  .wrap {
+    --gutter: 24px;
+  }
+}
+@media (min-width: 760px) {
+  .wrap {
+    --gutter: 40px;
+  }
 }
 
 .skip {
   position: absolute;
   left: 12px;
-  top: -64px;
+  top: -60px;
   z-index: 100;
-  padding: 8px 16px;
+  padding: 8px 14px;
   border-radius: var(--r-1);
   background: var(--text);
   color: var(--bg);
@@ -232,7 +268,7 @@ button {
 
 /* ---- State indicators: colour, and the shape as a second cue ---- */
 .st {
-  --sz: 10px;
+  --sz: 9px;
   position: relative;
   flex: none;
   display: inline-block;
@@ -244,7 +280,6 @@ button {
   border-radius: 50%;
   background: currentColor;
 }
-/* Ongoing (an incident being looked at, or the page still checking): a ring with a dot in it */
 .st-deploy {
   border-radius: 50%;
   border: 1.5px solid currentColor;
@@ -252,12 +287,16 @@ button {
 .st-deploy::after {
   content: '';
   position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 40%;
-  height: 40%;
+  inset: -1.5px;
   border-radius: 50%;
-  background: currentColor;
+  border: 1.5px solid currentColor;
+  animation: ping 1.6s var(--ease) infinite;
+}
+@keyframes ping {
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
 }
 .st-degraded {
   border-radius: 50%;
@@ -284,25 +323,26 @@ button {
   transform: translateX(-50%) rotate(-45deg);
 }
 
-/* ---- Pills: the state in words, tinted with its colour ---- */
+/* ---- Pills: tinted with the colour of their state ---- */
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   min-height: 28px;
   padding: 4px 12px;
-  border: 1px solid color-mix(in srgb, var(--c, var(--none)) 40%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c, var(--text-3)) 38%, transparent);
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--c, var(--none)) 12%, transparent);
-  color: color-mix(in srgb, var(--c, var(--text-2)) 62%, var(--text));
-  font-size: var(--fs-1);
+  background: color-mix(in srgb, var(--c, var(--text-3)) 12%, transparent);
+  color: color-mix(in srgb, var(--c, var(--text-soft)) 62%, var(--text));
+  font-size: 0.8125rem;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1;
   white-space: nowrap;
 }
 .pill.sm {
   min-height: 24px;
   padding: 4px 10px;
+  gap: 7px;
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -313,13 +353,28 @@ button {
 }
 .pill-lg {
   min-height: 36px;
-  padding: 4px 16px 4px 12px;
-  gap: 12px;
-  font-size: var(--fs-2);
+  padding: 4px 16px 4px 14px;
+  gap: 11px;
+  font-size: 0.875rem;
   font-weight: 700;
+  letter-spacing: 0.01em;
 }
 .pill-lg .st {
-  --sz: 12px;
+  --sz: 11px;
+}
+/* The big state breathes a soft halo of its colour */
+.pill-lg .st-up {
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 55%, transparent);
+  animation: halo 2.6s var(--ease) infinite;
+}
+@keyframes halo {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 50%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--c) 0%, transparent);
+  }
 }
 
 /* ---- Header: the KumoYami Status lockup, the language and the way back ---- */
@@ -327,24 +382,37 @@ button {
   position: sticky;
   top: 0;
   z-index: 20;
-  border-bottom: 1px solid var(--line);
-  background: var(--bg);
+  border-bottom: 1px solid rgb(var(--ink) / 0.06);
+  background: rgb(var(--glass) / 0.78);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
 }
 .top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  width: min(100%, 1120px);
+  width: min(100%, 1400px);
   min-height: var(--top-h);
   margin-inline: auto;
+  --gutter: 16px;
   padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));
+}
+@media (min-width: 760px) {
+  .top-row {
+    --gutter: 40px;
+  }
+}
+@media (min-width: 1100px) {
+  .top-row {
+    --gutter: 56px;
+  }
 }
 .brand {
   display: inline-flex;
   align-items: center;
+  gap: 14px;
   min-width: 0;
-  min-height: 44px;
   text-decoration: none;
 }
 .brand img {
@@ -352,53 +420,67 @@ button {
   width: 93px;
   height: auto;
 }
+.brand-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--line-2);
+}
+.brand-page {
+  color: var(--text-soft);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
 .top-nav {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 .lang-toggle,
 .back {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   min-height: 44px;
   padding: 0 12px;
   border: 0;
   border-radius: var(--r-2);
   background: none;
   color: var(--text-2);
-  font-size: var(--fs-1);
+  font-size: 0.875rem;
   font-weight: 500;
   text-decoration: none;
   cursor: pointer;
   user-select: none;
   transition:
-    color 0.15s ease,
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    color 0.2s var(--ease),
+    background-color 0.2s var(--ease),
+    border-color 0.2s var(--ease);
 }
 .lang-toggle span {
   font-weight: 700;
-}
-.back {
-  border: 1px solid var(--line-2);
-  color: var(--text);
-  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 .lang-toggle:active {
   background: var(--surface);
-}
-.back:active {
-  border-color: var(--text-2);
 }
 @media (hover: hover) and (pointer: fine) {
   .lang-toggle:hover {
     background: var(--surface);
     color: var(--text);
   }
+}
+.back {
+  border: 1px solid var(--line-2);
+  color: var(--text-soft);
+  font-weight: 700;
+}
+.back:active {
+  border-color: var(--text-2);
+}
+@media (hover: hover) and (pointer: fine) {
   .back:hover {
     border-color: var(--text-2);
+    color: var(--text);
   }
 }
 @media (max-width: 479px) {
@@ -415,6 +497,12 @@ button {
     justify-content: center;
     padding: 0;
   }
+  .lang-toggle {
+    padding: 0 10px;
+  }
+  .brand {
+    gap: 11px;
+  }
   .brand img {
     width: 84px;
   }
@@ -423,45 +511,97 @@ button {
   .lang-toggle svg {
     display: none;
   }
+  .brand-sep,
+  .brand-page {
+    display: none;
+  }
 }
 
-/* ---- Hero: the overall state, in words first and in its colour ---- */
+/* ---- Hero: the overall state, big and in its colour, the 90-day summary and one tile per group ---- */
 .hero {
-  padding-block: 48px;
+  position: relative;
+  overflow: hidden;
+  padding-top: 44px;
+  padding-bottom: 48px;
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--c, var(--none)) 6%, var(--bg));
 }
 @media (min-width: 760px) {
   .hero {
-    padding-block: 64px;
+    padding-top: 88px;
+    padding-bottom: 72px;
   }
 }
+/* A soft glow of the state colour, from the top left, and a faint grid fading out under it */
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hero::before {
+  background:
+    radial-gradient(56% 70% at 18% -8%, color-mix(in srgb, var(--c) 22%, transparent), transparent 72%),
+    radial-gradient(40% 50% at 92% 0%, color-mix(in srgb, var(--c) 8%, transparent), transparent 70%);
+  transition: background 0.6s var(--ease);
+}
+.hero::after {
+  background-image:
+    linear-gradient(to right, rgb(var(--ink) / 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--ink) / 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(70% 80% at 30% 0%, #000, transparent 75%);
+  mask-image: radial-gradient(70% 80% at 30% 0%, #000, transparent 75%);
+}
+.hero-in {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 32px;
+}
+@media (min-width: 960px) {
+  .hero-in {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    align-items: end;
+    gap: 32px 56px;
+  }
+  .tiles {
+    grid-column: 1 / -1;
+  }
+}
+.overall {
+  margin-top: 0;
+}
 .overall h1 {
-  max-width: 20ch;
-  margin-top: 16px;
-  font-size: clamp(2.25rem, 1.6rem + 2.4vw, 3.5rem);
-  font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.025em;
+  max-width: 16ch;
+  margin-top: 20px;
+  font-size: clamp(2.5rem, 1rem + 6.4vw, 4.75rem);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
 .overall h1.is-long {
-  max-width: 28ch;
-  font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
-  line-height: 1.15;
+  max-width: 22ch;
+  font-size: clamp(2rem, 0.9rem + 4.4vw, 3.375rem);
+  line-height: 1.06;
 }
 .overall[data-state='loading'] h1,
 .overall[data-state='unknown'] h1 {
   color: var(--text-2);
 }
 .overall-sub {
-  max-width: 65ch;
-  margin-top: 12px;
+  max-width: 620px;
+  margin-top: 18px;
   color: var(--text-2);
-  font-size: var(--fs-3);
-  line-height: 1.5;
-  text-wrap: pretty;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+@media (min-width: 760px) {
+  .overall-sub {
+    font-size: 1.1875rem;
+  }
 }
 .overall-sub:empty {
   display: none;
@@ -469,14 +609,30 @@ button {
 .checked {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 0;
-  margin-top: 24px;
+  gap: 2px 0;
+  margin-top: 18px;
   color: var(--text-3);
-  font-size: var(--fs-1);
+  font-size: 0.8125rem;
 }
 /* Wide: one line with a dot between; narrow: the time of the last check on its own line */
 #last-check {
   flex-basis: 100%;
+}
+/* The data could not be refreshed: the page says so and how old what it shows is */
+.stale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 12px;
+  color: var(--text-2);
+  font-size: 0.875rem;
+}
+.stale .st {
+  --c: var(--warn);
+}
+.stale .link-btn {
+  margin: 0;
 }
 @media (min-width: 640px) {
   #last-check {
@@ -487,21 +643,340 @@ button {
     margin-inline: 8px;
   }
 }
-/* The data could not be refreshed: the page says so and how old what it shows is */
-.stale {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 12px;
-  margin-top: 12px;
+
+/* The summary card: uptime over 90 days, how many work now, and every day of every service in one strip */
+.summary {
+  display: grid;
+  gap: 6px;
+  padding: 20px 20px 16px;
+  border: 1px solid rgb(var(--ink) / 0.07);
+  border-radius: var(--r-3);
+  background: linear-gradient(180deg, rgb(var(--ink) / 0.045), rgb(var(--ink) / 0.015)), color-mix(in srgb, var(--surface) 72%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-card);
+}
+@media (min-width: 760px) {
+  .summary {
+    padding: 24px 24px 18px;
+  }
+}
+.sum-label {
   color: var(--text-2);
-  font-size: var(--fs-1);
+  font-size: 0.8125rem;
+  font-weight: 500;
 }
-.stale .st {
-  --c: var(--warn);
+.sum-pct {
+  font-family: var(--f-code);
+  font-size: 2.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
 }
-.stale .link-btn {
+.sum-up {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text-2);
+  font-size: 0.8438rem;
+}
+.sum-up .st {
+  --sz: 8px;
+}
+.strip-sum {
+  height: 40px;
+  margin-top: 12px;
+}
+.sum-axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-3);
+  font-size: 0.7188rem;
+}
+
+/* A strip of days in small (the summary and the tiles) */
+.strip {
+  --n: 90;
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  gap: 2px;
+}
+.strip i {
+  border-radius: 1px;
+  background: var(--day-ok);
+}
+@media (max-width: 719px) {
+  .strip-sum {
+    --n: 45;
+  }
+  .strip-sum i:nth-child(-n + 45) {
+    display: none;
+  }
+}
+.strip-tile {
+  --n: 30;
+  height: 18px;
+  gap: 1.5px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tiles li:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+@media (min-width: 720px) {
+  .tiles {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .tiles li:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+}
+.tile {
+  display: grid;
+  gap: 14px;
+  height: 100%;
+  padding: 15px 16px 14px;
+  border: 1px solid rgb(var(--ink) / 0.06);
+  border-radius: var(--r-3);
+  background: linear-gradient(180deg, rgb(var(--ink) / 0.035), rgb(var(--ink) / 0.01)), var(--surface);
+  text-decoration: none;
+  transition:
+    background-color 0.2s var(--ease),
+    border-color 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+.tile:active {
+  border-color: rgb(var(--ink) / 0.14);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tile:hover {
+    border-color: rgb(var(--ink) / 0.14);
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .tile:hover {
+    transform: translateY(-1px);
+  }
+}
+.tile-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.tile-top .st {
+  --sz: 10px;
+}
+.tile-name {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tile-pre {
+  color: var(--text-3);
+  font-weight: 500;
+}
+/* Narrow tiles drop the «KumoYami» prefix (the headings below keep it) */
+@media (max-width: 719px) {
+  .tile-pre {
+    display: none;
+  }
+}
+@media (min-width: 720px) and (max-width: 1099px) {
+  .tile-pre {
+    display: none;
+  }
+}
+.tile-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.7812rem;
+}
+.tile-state {
+  color: var(--text-2);
+}
+.tile-pct {
+  color: var(--text-3);
+  font-family: var(--f-code);
+  font-size: 0.75rem;
+}
+/* Anything but operational: the tile takes a tint and an edge of its colour */
+.tile:not([data-t='ok']) {
+  border-color: color-mix(in srgb, var(--c) 40%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--c) 14%, transparent), color-mix(in srgb, var(--c) 4%, transparent)),
+    var(--surface);
+}
+.tile:not([data-t='ok']) .tile-state {
+  color: color-mix(in srgb, var(--c) 62%, var(--text));
+  font-weight: 700;
+}
+
+/* ---- Ticker (DS «08 Ticker»): each service and its response time ---- */
+.ticker {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+.ticker-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px 0 16px;
+  border-right: 1px solid var(--line);
+}
+@media (min-width: 760px) {
+  .ticker-head {
+    padding-left: 40px;
+  }
+}
+@media (min-width: 1100px) {
+  .ticker-head {
+    padding-left: 56px;
+  }
+}
+.ticker-label {
+  color: var(--text-2);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+@media (max-width: 479px) {
+  .ticker-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ticker-head {
+    padding-left: 6px;
+  }
+}
+.ticker-pause {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--r-2);
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+}
+.ticker-pause:active {
+  background: var(--surface);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ticker-pause:hover {
+    background: var(--surface);
+    color: var(--text);
+  }
+}
+.ticker-pause .i-play,
+.ticker.is-paused .ticker-pause .i-pause {
+  display: none;
+}
+.ticker.is-paused .ticker-pause .i-play {
+  display: block;
+}
+.ticker-view {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.ticker-view::before,
+.ticker-view::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 64px;
+  pointer-events: none;
+}
+.ticker-view::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg), transparent);
+}
+.ticker-view::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg), transparent);
+}
+@media (min-width: 760px) {
+  .ticker-view::before,
+  .ticker-view::after {
+    width: 120px;
+  }
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: tick 48s linear infinite;
+}
+.ticker:focus-within .ticker-track,
+.ticker.is-paused .ticker-track {
+  animation-play-state: paused;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ticker:hover .ticker-track {
+    animation-play-state: paused;
+  }
+}
+@keyframes tick {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ticker-list {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 0 15px 26px;
+  color: var(--text-2);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+.ticker-item b {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.ticker-item .ms {
+  color: var(--text-3);
+  font-family: var(--f-code);
+  font-size: 0.8125rem;
+}
+.ticker-item[data-s='down'] .ms {
+  color: color-mix(in srgb, var(--down) 70%, var(--text));
+}
+.ticker-item .sep {
+  width: 7px;
+  height: 7px;
+  margin-left: 14px;
+  background: var(--line-2);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
 /* ---- Maintenance notices: blue, with the dashed line of «Pausado» until they start ---- */
@@ -511,39 +986,40 @@ button {
 #maintenance {
   display: grid;
   gap: 12px;
-  padding-top: 32px;
+  padding-top: 40px;
 }
 .notice {
   --c: var(--maint);
   display: grid;
   gap: 8px;
-  padding: 16px;
-  border: 1px dashed color-mix(in srgb, var(--c) 50%, transparent);
+  padding: 18px 20px 20px;
+  border: 1px dashed color-mix(in srgb, var(--c) 45%, transparent);
   border-radius: var(--r-3);
-  background: color-mix(in srgb, var(--c) 8%, var(--surface));
-}
-@media (min-width: 760px) {
-  .notice {
-    padding: 20px 24px;
-  }
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--c) 12%, transparent), color-mix(in srgb, var(--c) 3%, transparent) 60%),
+    var(--surface);
 }
 .notice.is-now {
   border-style: solid;
+}
+.notice .st {
+  color: var(--c);
 }
 .notice-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 12px;
-  font-size: var(--fs-1);
+  gap: 6px 10px;
 }
 .notice-label {
-  color: color-mix(in srgb, var(--c) 62%, var(--text));
-  font-size: var(--fs-label);
+  color: color-mix(in srgb, var(--c) 65%, var(--text));
+  font-size: 0.8125rem;
   font-weight: 500;
 }
 .notice-when {
   color: var(--text-2);
+  font-family: var(--f-code);
+  font-size: 0.7812rem;
 }
 @media (min-width: 560px) {
   .notice-when {
@@ -551,9 +1027,9 @@ button {
   }
 }
 .notice-title {
-  font-size: var(--fs-2);
+  font-size: 1.125rem;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 .notice .inc-body {
   margin-top: 0;
@@ -561,65 +1037,69 @@ button {
 
 /* ---- Blocks ---- */
 .block {
-  padding-top: 48px;
+  padding-top: 64px;
 }
 @media (min-width: 760px) {
   .block {
-    padding-top: 64px;
+    padding-top: 88px;
   }
 }
 .block-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 12px 24px;
-  margin-bottom: 16px;
+  gap: 14px 24px;
+  margin-bottom: 22px;
 }
 .sec-title {
-  font-size: var(--fs-3);
-  font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.25rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
 }
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
+  gap: 6px 16px;
   margin: 0;
   padding: 0;
   list-style: none;
   color: var(--text-3);
-  font-size: var(--fs-label);
-  font-weight: 500;
+  font-size: 0.7812rem;
 }
 .legend li {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
+.legend-pct,
 .legend-unit {
   color: var(--text-2);
-  font-weight: 700;
+  font-family: var(--f-code);
+  font-size: 0.75rem;
 }
 
 /* The days. Colour first; the fill second: a brief incident fills half its bar, an outage is striped, a day without
    data is a low stub */
 .sw,
-.day {
+.day,
+.strip i {
   background: var(--day-ok);
 }
 .sw {
-  width: 6px;
-  height: 16px;
-  border-radius: 2px;
+  width: 5px;
+  height: 14px;
+  border-radius: 1.5px;
 }
 .sw[data-l='minor'],
-.day[data-l='minor'] {
-  background: linear-gradient(to top, var(--day-warn) 55%, color-mix(in srgb, var(--day-warn) 30%, transparent) 55%);
+.day[data-l='minor'],
+.strip i[data-l='minor'] {
+  background: linear-gradient(to top, var(--day-warn) 55%, color-mix(in srgb, var(--day-warn) 35%, transparent) 55%);
 }
 .sw[data-l='major'],
-.day[data-l='major'] {
+.day[data-l='major'],
+.strip i[data-l='major'] {
   background: repeating-linear-gradient(
     to top,
     var(--day-down) 0 3px,
@@ -627,21 +1107,24 @@ button {
   );
 }
 .sw[data-l='none'],
-.day[data-l='none'] {
+.day[data-l='none'],
+.strip i[data-l='none'] {
   background: linear-gradient(to top, var(--day-none) 4px, transparent 4px);
 }
 
 /* ---- The services card: one row per group, its parts under a disclosure ---- */
 .card {
-  border: 1px solid var(--line);
+  border: 1px solid rgb(var(--ink) / 0.06);
   border-radius: var(--r-3);
-  background: var(--surface);
+  background: linear-gradient(180deg, rgb(var(--ink) / 0.025), transparent 240px), var(--surface);
   overflow: hidden;
 }
-/* Loading: rows of the same shape as the real ones, shown only if the wait passes 300 ms */
+/* Loading: rows of the same shape as the real ones, shown only if the wait passes 300 ms. The shimmer is the loader,
+   like a spinner, so it stays with reduced motion */
 .skeleton {
   display: grid;
   gap: 16px;
+  min-height: 104px;
   padding: 20px 16px;
   border-top: 1px solid var(--line);
   opacity: 0;
@@ -655,7 +1138,9 @@ button {
   height: 16px;
   width: min(40%, 220px);
   border-radius: var(--r-1);
-  background: var(--raised);
+  background: linear-gradient(90deg, var(--raised) 30%, color-mix(in srgb, var(--raised) 55%, var(--surface)) 50%, var(--raised) 70%)
+    0 0 / 300% 100%;
+  animation: shimmer 1.6s linear infinite;
 }
 .skeleton i + i {
   width: 100%;
@@ -663,19 +1148,13 @@ button {
 }
 @media (min-width: 760px) {
   .skeleton {
-    padding: 24px;
+    padding: 22px 24px;
   }
 }
 @keyframes appear {
   to {
     opacity: 1;
   }
-}
-/* The shimmer is the loader, like a spinner: it stays with reduced motion too */
-.skeleton i {
-  background: linear-gradient(90deg, var(--raised) 30%, color-mix(in srgb, var(--raised) 55%, var(--surface)) 50%, var(--raised) 70%)
-    0 0 / 300% 100%;
-  animation: shimmer 1.6s linear infinite;
 }
 @keyframes shimmer {
   from {
@@ -693,57 +1172,57 @@ button {
 .group:first-child {
   border-top: 0;
 }
-/* A group with a problem carries a faint wash of its colour (its pill says which) */
+/* A group with a problem carries an edge and a faint wash of its colour */
 .group:not([data-t='ok']):not([data-t='none']) {
-  background: color-mix(in srgb, var(--c) 6%, var(--surface));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 7%, transparent), transparent 55%);
+}
+.group:not([data-t='ok']):not([data-t='none'])::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--c);
 }
 .row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px 16px;
-  padding: 16px 16px 20px;
+  padding: 18px 16px 20px;
 }
 @media (min-width: 760px) {
   .row {
-    padding: 20px 24px 24px;
+    padding: 22px 24px 24px;
   }
 }
 .row-name {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0 12px;
+  gap: 2px 12px;
   min-width: 0;
 }
 .row-name h3,
 .row-name h4 {
   margin: 0;
-  font-size: var(--fs-2);
+  font-size: 1.125rem;
   font-weight: 700;
+  letter-spacing: -0.005em;
 }
 .row-desc {
   color: var(--text-3);
-  font-size: var(--fs-1);
+  font-size: 0.8438rem;
 }
 .row-state {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
+  gap: 12px;
   white-space: nowrap;
 }
-.stats {
-  display: inline-flex;
-  gap: 12px;
-  color: var(--text-2);
-  font-size: var(--fs-1);
-}
-.stats > span {
-  min-width: 7ch;
-  text-align: right;
-}
-/* Narrow: the description takes its own line under the name; the figures go under the state */
+/* Narrow: the description takes its own line under the name; the uptime goes under the state */
 @media (max-width: 559px) {
   .row-name {
     display: contents;
@@ -765,34 +1244,45 @@ button {
     grid-row: 1;
     justify-self: end;
   }
-  .row-state .stats {
+  .row-state .uptime {
     grid-column: 2;
     grid-row: 2;
-    justify-self: end;
-  }
-  .stats > span {
-    min-width: 0;
+    align-self: baseline;
   }
   .days-wrap {
     grid-row: 3;
   }
 }
+.uptime {
+  min-width: 6ch;
+  color: var(--text-2);
+  font-family: var(--f-code);
+  font-size: 0.8125rem;
+  text-align: right;
+}
+@media (max-width: 399px) {
+  .row-state .pill {
+    min-height: 26px;
+    padding: 0 10px;
+    font-size: 0.7812rem;
+  }
+}
 .days-wrap {
   grid-column: 1 / -1;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 .days {
   display: grid;
   grid-template-columns: repeat(var(--n, 90), minmax(0, 1fr));
   gap: 2px;
-  height: 32px;
+  height: 34px;
   border-radius: var(--r-1);
   cursor: default;
   touch-action: pan-y;
 }
 .day {
   border-radius: 2px;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s var(--ease);
 }
 .days.is-active .day {
   opacity: 0.4;
@@ -820,13 +1310,14 @@ button {
   .days {
     --n: 30;
     gap: 3px;
+    height: 30px;
   }
   .day:nth-child(-n + 60) {
     display: none;
   }
 }
 .sub .days {
-  height: 24px;
+  height: 22px;
 }
 
 .more {
@@ -835,19 +1326,21 @@ button {
   gap: 8px;
   min-height: 44px;
   margin: -12px 16px 8px 8px;
-  padding: 0 12px 0 8px;
+  padding: 4px 10px 4px 8px;
   border: 0;
   border-radius: var(--r-2);
   background: none;
   color: var(--text-2);
-  font-size: var(--fs-1);
+  font-size: 0.8438rem;
   cursor: pointer;
-  user-select: none;
 }
 @media (min-width: 760px) {
   .more {
     margin-left: 16px;
   }
+}
+.more {
+  user-select: none;
 }
 .more:active {
   background: var(--raised);
@@ -859,7 +1352,7 @@ button {
   }
 }
 .more svg {
-  transition: transform 0.2s var(--ease-out);
+  transition: transform 0.25s var(--ease);
 }
 .more[aria-expanded='true'] svg {
   transform: rotate(90deg);
@@ -867,12 +1360,12 @@ button {
 .subs {
   margin: 0 8px 12px;
   border: 1px solid var(--line);
-  border-radius: var(--r-2);
+  border-radius: var(--r-3);
   background: var(--bg);
 }
 @media (min-width: 760px) {
   .subs {
-    margin: 0 16px 16px;
+    margin: 0 16px 18px;
   }
 }
 .sub {
@@ -882,54 +1375,60 @@ button {
   border-top: 0;
 }
 .sub .row {
-  padding: 12px 12px 16px;
+  padding: 14px 14px 16px;
 }
 @media (min-width: 760px) {
   .sub .row {
-    padding: 12px 16px 16px;
+    padding: 14px 18px 16px;
   }
 }
 .sub h4 {
+  font-size: 0.9375rem;
   font-weight: 500;
+}
+.sub .pill {
+  min-height: 24px;
+  font-size: 0.75rem;
 }
 
 .axis {
   display: flex;
   justify-content: space-between;
-  margin-top: 8px;
+  margin-top: 10px;
   padding-inline: 4px;
   color: var(--text-3);
-  font-size: var(--fs-label);
-  font-weight: 500;
+  font-size: 0.75rem;
 }
 .note {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   gap: 12px;
-  max-width: 70ch;
-  margin-top: 24px;
+  max-width: 700px;
+  margin-top: 28px;
   color: var(--text-2);
+  font-size: 0.9062rem;
 }
 .note-i {
   margin-top: 2px;
   color: var(--text-3);
 }
 
-/* Errors: a dashed line, what happened, and a way to try again */
+/* Errors: a dashed line and the words */
 .load-error {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
-  gap: 4px 12px;
+  gap: 4px 14px;
   margin: 16px;
-  padding: 16px 20px;
+  padding: 18px 20px;
   border: 1px dashed var(--line-2);
-  border-radius: var(--r-2);
+  border-radius: var(--r-3);
   color: var(--text-2);
+  font-size: 0.9062rem;
 }
 .load-error .st {
-  margin-top: 8px;
+  margin-top: 7px;
 }
 .load-error-title {
   color: var(--text);
@@ -938,15 +1437,18 @@ button {
 .retry {
   grid-column: 2;
   justify-self: start;
+  margin-top: 10px;
   min-height: 44px;
-  margin-top: 8px;
   padding: 0 16px;
   border: 1px solid var(--line-2);
-  border-radius: var(--r-1);
+  border-radius: var(--r-2);
   background: none;
   color: var(--text);
+  font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
+}
+.retry {
   user-select: none;
 }
 .retry:active {
@@ -968,13 +1470,14 @@ button {
   position: fixed;
   z-index: 50;
   max-width: 240px;
-  padding: 8px 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-2);
   border-radius: var(--r-2);
   background: var(--raised);
   color: var(--text);
-  font-size: var(--fs-1);
+  font-size: 0.8125rem;
   line-height: 1.45;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+  box-shadow: var(--shadow-tip);
   pointer-events: none;
 }
 .tip strong {
@@ -985,18 +1488,14 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 4px;
-  color: var(--text-2);
-}
-@media (forced-colors: active) {
-  .tip {
-    border: 1px solid CanvasText;
-  }
+  margin-top: 2px;
+  color: var(--text-soft);
 }
 
 /* ---- Incidents: a calm timeline, its nodes in the colour of each incident ---- */
 .quiet {
   color: var(--text-3);
+  font-size: 0.9062rem;
 }
 .quiet.is-empty,
 .quiet.is-error {
@@ -1004,7 +1503,7 @@ button {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
-  padding: 16px 20px;
+  padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: var(--r-3);
   color: var(--text-2);
@@ -1016,6 +1515,9 @@ button {
 .quiet .link-btn {
   margin: 0;
 }
+#incidents > .quiet.is-error + .timeline {
+  margin-top: 24px;
+}
 .timeline {
   margin: 0;
   padding: 0;
@@ -1024,8 +1526,8 @@ button {
 .inc {
   position: relative;
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 14px;
 }
 @media (min-width: 760px) {
   .inc {
@@ -1036,9 +1538,9 @@ button {
 .inc::before {
   content: '';
   position: absolute;
-  left: 15.5px;
+  left: 14.5px;
   top: 32px;
-  bottom: 0;
+  bottom: -2px;
   width: 1px;
   background: var(--line);
 }
@@ -1048,26 +1550,31 @@ button {
 .inc-node {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
   border-radius: 50%;
   background: color-mix(in srgb, var(--c) 14%, var(--bg));
 }
+.inc.is-open .inc-node {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 10%, transparent);
+}
 .inc-card {
   min-width: 0;
-  padding: 4px 0 32px;
+  padding: 3px 0 36px;
 }
 .inc.is-open .inc-card {
   margin-bottom: 24px;
-  padding: 16px;
-  border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+  padding: 18px 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
   border-radius: var(--r-3);
-  background: color-mix(in srgb, var(--c) 7%, var(--surface));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--c) 9%, transparent), transparent 55%),
+    var(--surface);
 }
 @media (min-width: 760px) {
   .inc.is-open .inc-card {
-    padding: 20px 24px;
+    padding: 20px 24px 22px;
   }
 }
 .inc-top {
@@ -1078,23 +1585,25 @@ button {
 }
 .inc-date {
   color: var(--text-3);
-  font-size: var(--fs-1);
+  font-family: var(--f-code);
+  font-size: 0.7812rem;
 }
 .inc-card h3 {
-  margin-top: 8px;
-  font-size: var(--fs-2);
+  margin-top: 10px;
+  font-size: 1.125rem;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
 }
 .inc-meta {
   margin-top: 4px;
   color: var(--text-3);
-  font-size: var(--fs-1);
+  font-size: 0.8438rem;
 }
 .inc-body {
-  max-width: 70ch;
-  margin-top: 8px;
-  color: var(--text-2);
+  margin-top: 10px;
+  color: var(--text-soft);
+  font-size: 0.9375rem;
   overflow-wrap: anywhere;
 }
 .inc-body p + p,
@@ -1113,6 +1622,7 @@ button {
 .inc-body a {
   color: var(--text);
   text-decoration-color: var(--text-3);
+  text-underline-offset: 3px;
 }
 @media (hover: hover) and (pointer: fine) {
   .inc-body a:hover {
@@ -1120,17 +1630,17 @@ button {
   }
 }
 .inc-body code {
-  padding: 0 4px;
+  padding: 1px 5px;
   border-radius: var(--r-1);
   background: var(--raised);
   font-family: var(--f-code);
-  font-size: 0.875em;
+  font-size: 0.88em;
 }
 .updates {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   margin: 16px 0 0;
-  padding: 0 0 0 16px;
+  padding: 2px 0 2px 16px;
   border-left: 1px solid var(--line-2);
   list-style: none;
 }
@@ -1140,7 +1650,8 @@ button {
 .updates time {
   display: block;
   color: var(--text-3);
-  font-size: var(--fs-1);
+  font-family: var(--f-code);
+  font-size: 0.75rem;
 }
 .updates .inc-body {
   margin-top: 4px;
@@ -1148,17 +1659,15 @@ button {
 .link-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-height: 44px;
   margin-top: 4px;
   padding: 0;
   border: 0;
   background: none;
   color: var(--text-2);
-  font-size: var(--fs-1);
+  font-size: 0.8438rem;
   font-weight: 500;
-  text-decoration: underline;
-  text-decoration-color: var(--line-2);
   cursor: pointer;
 }
 .link-btn:active {
@@ -1166,18 +1675,22 @@ button {
 }
 .link-btn[aria-disabled='true'] {
   color: var(--text-3);
-  text-decoration: none;
   cursor: progress;
 }
 @media (hover: hover) and (pointer: fine) {
   .link-btn:hover:not([aria-disabled='true']) {
     color: var(--text);
-    text-decoration-color: var(--text-3);
   }
 }
 .all-incidents {
-  margin-top: 8px;
-  font-size: var(--fs-1);
+  margin-top: -8px;
+  padding-left: 44px;
+  font-size: 0.875rem;
+}
+@media (min-width: 760px) {
+  .all-incidents {
+    padding-left: 50px;
+  }
 }
 .all-incidents a {
   display: inline-flex;
@@ -1185,36 +1698,50 @@ button {
   min-height: 44px;
   color: var(--text-2);
   text-decoration-color: var(--line-2);
+  text-underline-offset: 3px;
 }
 
 /* ---- Footer ---- */
 .foot {
-  margin-top: 64px;
+  margin-top: 96px;
   border-top: 1px solid var(--line);
 }
 .foot-grid,
 .foot-bottom {
-  width: min(100%, 1120px);
+  --gutter: 16px;
+  width: min(100%, 1400px);
   margin-inline: auto;
   padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));
 }
+@media (min-width: 760px) {
+  .foot-grid,
+  .foot-bottom {
+    --gutter: 40px;
+  }
+}
+@media (min-width: 1100px) {
+  .foot-grid,
+  .foot-bottom {
+    --gutter: 56px;
+  }
+}
 .foot-grid {
   display: grid;
-  gap: 24px;
+  gap: 28px;
   padding-top: 48px;
-  padding-bottom: 32px;
+  padding-bottom: 36px;
 }
 @media (min-width: 760px) {
   .foot-grid {
     grid-template-columns: 1fr auto;
     align-items: start;
-    gap: 48px;
+    gap: 56px;
   }
 }
 .foot-brand {
   display: grid;
   justify-items: start;
-  gap: 12px;
+  gap: 14px;
 }
 .foot-brand img {
   display: block;
@@ -1222,20 +1749,21 @@ button {
   height: auto;
 }
 .foot-brand p {
-  max-width: 240px;
+  max-width: 220px;
   color: var(--text-3);
-  font-size: var(--fs-1);
+  font-size: 0.875rem;
 }
 .foot-links {
   display: grid;
-  gap: 0 32px;
+  gap: 2px 36px;
   grid-template-columns: repeat(2, max-content);
 }
 .foot-links a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: var(--text-2);
+  color: var(--text-soft);
+  font-size: 0.9375rem;
   text-decoration: none;
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1243,6 +1771,7 @@ button {
     color: var(--text);
     text-decoration: underline;
     text-decoration-color: var(--text-3);
+    text-underline-offset: 4px;
   }
 }
 @media (max-width: 400px) {
@@ -1256,23 +1785,23 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-top: 16px;
+  padding-top: 20px;
   padding-bottom: max(32px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
   color: var(--text-3);
-  font-size: var(--fs-1);
+  font-size: 0.8125rem;
 }
 .lang-switch {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   padding: 0 0 0 12px;
   border: 1px solid var(--line);
   border-radius: var(--r-2);
   color: var(--text-3);
 }
 .lang-switch svg {
-  margin-right: 4px;
+  margin-right: 6px;
 }
 .lang-switch button {
   min-width: 44px;
@@ -1281,54 +1810,103 @@ button {
   border-radius: var(--r-2);
   background: none;
   color: var(--text-3);
-  font-size: var(--fs-1);
+  font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
-  user-select: none;
-}
-.lang-switch button[aria-pressed='true'] {
-  background: var(--raised);
-  color: var(--text);
 }
 @media (hover: hover) and (pointer: fine) {
   .lang-switch button:hover {
     color: var(--text);
   }
 }
+.lang-switch button[aria-pressed='true'] {
+  background: var(--raised);
+  color: var(--text);
+}
 
 /* ---- 404 ---- */
 .lost {
-  min-height: 40vh;
-  min-height: 40svh;
+  display: block;
+  min-height: 46vh;
 }
 .lost h1 {
-  font-size: clamp(2.25rem, 1.6rem + 2.4vw, 3.5rem);
-  font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.025em;
+  margin-top: 0;
+  font-size: clamp(2.375rem, 1rem + 6.4vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
 }
 .lost p {
-  max-width: 65ch;
+  max-width: 620px;
   margin-top: 16px;
   color: var(--text-2);
-  font-size: var(--fs-3);
+  font-size: 1.0625rem;
 }
 .lost a,
 .foot-bottom a {
   color: var(--text);
+  text-underline-offset: 3px;
 }
 
-/* Reduced motion: what moves goes (smooth scroll, the chevron turning), the fades stay at 150 ms or less, and the
-   loading shimmer stays, as a spinner would (no global override) */
+/* The pause button of the ticker stops every loop of the page: the ticker, the halo and the ping freeze where they
+   are */
+.is-still .ticker-track,
+.is-still .pill-lg .st-up,
+.is-still .st-deploy::after {
+  animation-play-state: paused;
+}
+
+/* Reduced motion: each moving part has its own still version (no global override). The loops stop: the ticker is one
+   copy scrolled by hand, the halo and the ping become a still ring. Colour and opacity fades stay, at 150 ms or less;
+   the loading shimmer stays, as a spinner would */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .st-deploy::after {
+    animation: none;
+    transform: scale(1.9);
+    opacity: 0.35;
+  }
+  .pill-lg .st-up {
+    animation: none;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent);
+  }
+  .hero::before {
+    transition-duration: 0.15s;
+  }
+  .lang-toggle,
+  .back,
+  .tile,
+  .day {
+    transition-duration: 0.15s;
   }
   .more svg {
     transition: none;
   }
   .skeleton {
     animation-duration: 0.15s;
+  }
+  /* The ticker stands still: one copy, scrolled by hand */
+  .ticker-track {
+    animation: none;
+  }
+  .ticker-view {
+    overflow-x: auto;
+  }
+  .ticker-view::before,
+  .ticker-view::after,
+  .ticker-list[aria-hidden='true'] {
+    display: none;
+  }
+  .ticker-list {
+    padding-right: 24px;
+  }
+}
+/* Narrow and still: no label shown and no button to show, so no head at all (the label still names the band) */
+@media (prefers-reduced-motion: reduce) and (max-width: 479px) {
+  .ticker-head {
+    display: none;
   }
 }
 
@@ -1337,6 +1915,7 @@ button {
 @media (forced-colors: active) {
   .day,
   .sw,
+  .strip i,
   .st,
   .st::before,
   .st::after {
@@ -1346,16 +1925,20 @@ button {
     outline-color: Highlight;
   }
   .card,
+  .summary,
+  .tile,
   .notice,
   .subs,
   .inc.is-open .inc-card,
   .load-error,
   .quiet.is-empty,
   .quiet.is-error,
-  .pill {
+  .pill,
+  .tip {
     border-color: CanvasText;
   }
   .lang-toggle,
+  .ticker-pause,
   .more,
   .retry,
   .lang-switch button {
@@ -1367,5 +1950,9 @@ button {
   }
   .days .day.is-on {
     outline-color: Highlight;
+  }
+  .hero::before,
+  .hero::after {
+    display: none;
   }
 }

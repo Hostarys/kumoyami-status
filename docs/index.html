@@ -24,9 +24,9 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preload" href="fonts/zen-kaku-gothic-new-400.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/zen-kaku-gothic-new-700.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="style.css?v=5">
-  <script src="app.js?v=5" defer></script>
+  <link rel="preload" href="fonts/zen-kaku-gothic-new-900.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=6">
+  <script src="app.js?v=6" defer></script>
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Saltar al contenido</a>
@@ -51,14 +51,31 @@
 
   <main id="main" tabindex="-1">
     <section class="hero" data-t="none" aria-labelledby="overall-title">
-      <div class="wrap">
+      <div class="wrap hero-in">
+        <div class="hero-main">
         <div class="overall" id="overall" data-state="loading">
-          <p class="overall-pill"><span class="pill pill-lg t-none" id="overall-pill"><span class="st st-deploy t-none" aria-hidden="true"></span><span id="overall-word">Comprobando</span></span></p>
+          <p class="overall-pill"><span class="pill" id="overall-pill"><span class="st" aria-hidden="true"></span><span id="overall-word">Comprobando</span></span></p>
           <h1 id="overall-title" data-i18n="loading">Comprobando…</h1>
           <p class="overall-sub" id="overall-sub"></p>
         </div>
         <p class="checked"><span data-i18n="checkedEvery">Comprobado cada 5 minutos desde fuera de nuestros servidores</span><span id="last-check"></span></p>
         <div class="stale" id="stale" hidden></div>
+        </div>
+        <div class="summary" id="summary" hidden></div>
+        <ul class="tiles" id="tiles" data-i18n-aria="tilesLabel" aria-label="Resumen por servicio" hidden></ul>
+      </div>
+    </section>
+
+    <section class="ticker" id="ticker" aria-labelledby="ticker-title" hidden>
+      <div class="ticker-head">
+        <h2 class="ticker-label" id="ticker-title" data-i18n="tickerTitle">Respuesta</h2>
+        <button type="button" class="ticker-pause" id="ticker-pause" data-i18n-aria="tickerPause" aria-label="Detener el movimiento de la página">
+          <svg class="i-pause" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M5.5 3.5v9M10.5 3.5v9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <svg class="i-play" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M5 3.5v9l7-4.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="ticker-view" id="ticker-view">
+        <div class="ticker-track" id="ticker-track"></div>
       </div>
     </section>
 
@@ -72,8 +89,7 @@
           <li><span class="sw" data-l="minor" aria-hidden="true"></span><span data-i18n="legendMinor">Breve</span></li>
           <li><span class="sw" data-l="major" aria-hidden="true"></span><span data-i18n="legendMajor">Caída</span></li>
           <li><span class="sw" data-l="none" aria-hidden="true"></span><span data-i18n="legendNone">Sin datos</span></li>
-          <li><span class="legend-unit" aria-hidden="true">%</span><span data-i18n="legendPct">Disponibilidad en 90 días</span></li>
-          <li><span class="legend-unit" aria-hidden="true">ms</span><span data-i18n="legendMs">Respuesta en la última comprobación</span></li>
+          <li><span class="legend-pct" aria-hidden="true">%</span><span data-i18n="legendPct">Disponibilidad en 90 días</span></li>
         </ul>
       </div>
       <div class="card" id="groups" aria-busy="true">
